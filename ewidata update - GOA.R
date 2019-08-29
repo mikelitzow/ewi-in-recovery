@@ -238,7 +238,7 @@ egoa.spr <- tapply(SST.mean, spr.yrs, mean)
 # collect new sst values
 head(dat)
 new.sst <- data.frame(year=rep(1950:2019, 4), 
-                      code=rep(c("egoa.spr.sst", "egoa.win.sst", "wgoa.spr.sst", "wgoa.win.sst"), each=length(1950:2019)),
+                      code=rep(c("AKCLIM_egoa.spr.sst", "AKCLIM_egoa.win.sst", "AKCLIM_wgoa.spr.sst", "AKCLIM_wgoa.win.sst"), each=length(1950:2019)),
                       value=c(egoa.spr[names(egoa.spr) %in% 1950:2019], egoa.win[names(egoa.win) %in% 1950:2019], wgoa.spr[names(wgoa.spr) %in% 1950:2019], wgoa.win[names(wgoa.win) %in% 1950:2019]),
                       system=rep(c("EGOA", "WGOA"), each=length(1950:2019)), subtype=NA)
 
@@ -255,3 +255,7 @@ ggplot(goa.dat, aes(year, value)) +
   geom_line() +
   geom_point() +
   facet_wrap(~code, scales="free_y") 
+
+# load covariates from AK salmon analysis
+covar.dat <- read.csv("salmon.covariates.csv")
+head(covar.dat)
