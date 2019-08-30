@@ -259,3 +259,27 @@ ggplot(goa.dat, aes(year, value)) +
 # load covariates from AK salmon analysis
 covar.dat <- read.csv("salmon.covariates.csv")
 head(covar.dat)
+
+# get Papa updates
+papa <- read.csv("xtra.papa.csv")
+papa
+
+covar.dat$Papa[54:56] <- papa$papa[3:5]
+
+# now load updated upwelling station data
+uw <- read.csv("upwelling.csv")
+
+levels(uw$POSITION)
+
+uw <- uw %>%
+  filter(POSITION %in% c("57N.137W", "60N.146W", "60N.149W")) %>%
+  select(1,2,7:9) %>%
+  gather(key="MONTH", value, -POSITION, -YEAR) %>%
+  arrange(POSITION, YEAR, MONTH)
+
+sum.uw <- uw %>%
+  group_by(POSITION, YEAR) %>%
+  summarise(mean=mean(value)) %>%
+  filter(YEAR >= 1950)
+
+unique(goa.dat$code)
