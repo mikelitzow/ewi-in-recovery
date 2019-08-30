@@ -26,12 +26,12 @@ ggplot(goa.dat, aes(year, value)) +
 # 20º-70ºN, 120º-250ºE, 1854-present
 
 # identify latest year and month needed
-year <- 2019
-month <- "07"
-
-URL <- paste("https://coastwatch.pfeg.noaa.gov/erddap/griddap/nceiErsstv5.nc?sst[(1854-01-01):1:(", year, "-", month, "-01T00:00:00Z)][(0.0):1:(0.0)][(20):1:(70)][(120):1:(250)]", sep="")
-
-download.file(URL, "North.Pacific.ersst")
+# year <- 2019
+# month <- "07"
+# 
+# URL <- paste("https://coastwatch.pfeg.noaa.gov/erddap/griddap/nceiErsstv5.nc?sst[(1854-01-01):1:(", year, "-", month, "-01T00:00:00Z)][(0.0):1:(0.0)][(20):1:(70)][(120):1:(250)]", sep="")
+# 
+# download.file(URL, "North.Pacific.ersst")
 nc <- nc_open("North.Pacific.ersst")
 
 # extract dates
@@ -272,7 +272,7 @@ uw <- read.csv("upwelling.csv")
 levels(uw$POSITION)
 
 uw <- uw %>%
-  filter(POSITION %in% c("57N.137W", "60N.146W", "60N.149W")) %>%
+  filter(POSITION %in% c("54N.134W", "57N.137W", "60N.146W", "60N.149W")) %>%
   select(1,2,7:9) %>%
   gather(key="MONTH", value, -POSITION, -YEAR) %>%
   arrange(POSITION, YEAR, MONTH)
@@ -283,3 +283,29 @@ sum.uw <- uw %>%
   filter(YEAR >= 1950)
 
 unique(goa.dat$code)
+
+# I'm gonna make a new df for GOA climate data!
+
+names(sum.uw) <- c("code", "year", "value")
+
+sum.uw <- tapply(sum.uw$value, list(sum.uw$year, sum.uw$code), identity)
+drop <- is.na(colMeans(sum.uw))
+sum.uw <- sum.uw[,!drop]
+
+# load stress / ssh / slp gradient
+goa.clim <- read.csv("long-term goa ssh stress slp gradient.csv")
+
+goa.clim <- cbind(goa.clim, sum.uw)
+
+keep <- grep("sst", goa.dat$code)
+temp <- goa.dat[keep,] 
+temp <- tapply(temp$value, list(temp$year, temp$code), identity)
+drop <- is.na(colMeans(temp))
+temp <- temp[,!drop]
+
+goa.clim <- cbind(goa.clim, temp)
+names(goa.clim)[10:13] <- c("egoa.spr.sst", "egoa.win.sst", "wgoa.spr.sst", "wgoa.win.sst")
+
+goa.clim$papa.index <- covar.dat$FMA.20m.GAK1.sal[match(goa.clim$year, covar.dat$year)]   
+
+# now run the dang climate DFA model!
