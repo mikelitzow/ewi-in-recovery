@@ -397,7 +397,9 @@ capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
 dev.off() 
 
+
 # now two trends with expanded data
+
 max_trends = 2
 name <- "GOA_clim_2_trends_expanded_data"
 
