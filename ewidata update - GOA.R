@@ -26,12 +26,12 @@ ggplot(goa.dat, aes(year, value)) +
 # 20º-70ºN, 120º-250ºE, 1854-present
 
 # identify latest year and month needed
-# year <- 2019
-# month <- "07"
-# 
-# URL <- paste("https://coastwatch.pfeg.noaa.gov/erddap/griddap/nceiErsstv5.nc?sst[(1854-01-01):1:(", year, "-", month, "-01T00:00:00Z)][(0.0):1:(0.0)][(20):1:(70)][(120):1:(250)]", sep="")
-# 
-# download.file(URL, "North.Pacific.ersst")
+year <- 2019
+month <- "07"
+
+URL <- paste("https://coastwatch.pfeg.noaa.gov/erddap/griddap/nceiErsstv5.nc?sst[(1854-01-01):1:(", year, "-", month, "-01T00:00:00Z)][(0.0):1:(0.0)][(20):1:(70)][(120):1:(250)]", sep="")
+
+download.file(URL, "North.Pacific.ersst")
 nc <- nc_open("North.Pacific.ersst")
 
 # extract dates
@@ -311,6 +311,17 @@ temp <- goa.dat %>%
 
 goa.clim$papa.index <- c(temp$value, papa$papa[3:5])  
 
+plot.clim <- goa.clim %>%
+  gather(key="code", value="value", -year)
+
+ggplot(plot.clim, aes(year, value)) +
+  theme_bw() +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~code, scale="free_y")
+
+write.csv(goa.clim, "updated goa climate data.csv", row.names=F)
+
 #######################################
 # now run the dang climate DFA model! #
 #######################################
@@ -328,31 +339,28 @@ library(gtools)
 library(bayesdfa)
 
 mcmc_iter = 4000
-max_trends = 3 # changing to 3!
+max_trends = 3 
 mcmc_chains = 3
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-
+# doing this in a clunky way - 
+# find dfa trends with 2 or 3 candidate trends 
+# and original data (as in previous iteration of paper)
+# or expanded data (adding SSH and wind stress)
 sub_data <- goa.clim %>%
   gather(key="code", value="value", -year)
 
 # set the name for the model output!
-name <- "GOA_clim_3_trends"
+name <- "GOA_clim_3_trends_expanded_data"
 
-
-# this is the DFA code chunk!
-
-# this chunk should be transferable to other models!
 # reshape data
-
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
 Y <- dcast(melted, code ~ year)
 names = Y$code
 Y = as.matrix(Y[,-which(names(Y) == "code")])
 
-# do the trend search, and save the table of model selection, along with the best model. By default, this isn't comparing student-t
-# versus normal models, but just estimating the student-t df parameter
+# do the trend search
 set.seed(99)
 dfa_summary = find_dfa_trends(
   y = Y,
@@ -387,4 +395,104 @@ print(plot_fitted(dfa_summary$best_model,names=names) +
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() # 
+dev.off() 
+
+# now two trends with original data
+max_trends = 2
+name <- "GOA_clim_2_trends_expanded_data"
+
+# reshape data
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+# do the trend search
+set.seed(99)
+dfa_summary = find_dfa_trends(
+  y = Y,
+  kmax = min(max_trends, nrow(Y)),
+  iter = mcmc_iter,
+  compare_normal = FALSE,
+  variance = c("unequal", "equal"),
+  chains = mcmc_chains
+)
+saveRDS(dfa_summary, file = paste0(name, ".rds"))
+
+# Make default plots (currently work in progress)
+pdf(paste0(name, "_plots.pdf"))
+rotated = rotate_trends(dfa_summary$best_model)
+# trends
+print(plot_trends(rotated, years = as.numeric(colnames(Y))))
+# loadings
+print(plot_loadings(rotated, names = names))
+
+if(ncol(rotated$Z_rot_mean)==2) {
+  plot(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], col="white",
+       xlab="Loading 1", ylab = "Loading 2")
+  text(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], names, cex=0.3)
+  lines(c(-10,10),c(0,0))
+  lines(c(0,0), c(-10,10))
+}
+# predicted values with data
+print(plot_fitted(dfa_summary$best_model,names=names) + 
+        theme(strip.text.x = element_text(size = 6)))
+
+# table of AIC and std errors
+summary_table<-dfa_summary$summary
+capture.output(summary_table, file = paste0(name, "_summary.txt"))
+
+dev.off() 
+
+## ############################
+# now the original data set
+sub_data <- goa.clim %>%
+  select(-ssh, -wind.stress) %>%
+  gather(key="code", value="value", -year)
+
+# two trends with original data
+max_trends = 2
+name <- "GOA_clim_2_trends_original_data"
+
+# reshape data
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+# do the trend search
+set.seed(99)
+dfa_summary = find_dfa_trends(
+  y = Y,
+  kmax = min(max_trends, nrow(Y)),
+  iter = mcmc_iter,
+  compare_normal = FALSE,
+  variance = c("unequal", "equal"),
+  chains = mcmc_chains
+)
+saveRDS(dfa_summary, file = paste0(name, ".rds"))
+
+# Make default plots (currently work in progress)
+pdf(paste0(name, "_plots.pdf"))
+rotated = rotate_trends(dfa_summary$best_model)
+# trends
+print(plot_trends(rotated, years = as.numeric(colnames(Y))))
+# loadings
+print(plot_loadings(rotated, names = names))
+
+if(ncol(rotated$Z_rot_mean)==2) {
+  plot(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], col="white",
+       xlab="Loading 1", ylab = "Loading 2")
+  text(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], names, cex=0.3)
+  lines(c(-10,10),c(0,0))
+  lines(c(0,0), c(-10,10))
+}
+# predicted values with data
+print(plot_fitted(dfa_summary$best_model,names=names) + 
+        theme(strip.text.x = element_text(size = 6)))
+
+# table of AIC and std errors
+summary_table<-dfa_summary$summary
+capture.output(summary_table, file = paste0(name, "_summary.txt"))
+
+dev.off() 
