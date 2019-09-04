@@ -34,14 +34,14 @@ GOA climate trend loadings.
 
 ```{r, echo=F}
 
-GOA.clim <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_clim_5.15.18.rds") # read in GOA climate model
+GOA.clim <- readRDS("GOA_clim_2_trends_original_data.rds") # read in GOA climate model
 
 # recover the years and names for plots!
-ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
-keep <- grep("AKCLIM_GOA", ewidata$code)
+goa.clim <- read.csv("updated goa climate data.csv")
 
-ewidata <- ewidata[keep,]
-sub_data = ewidata
+sub_data <- goa.clim %>%
+  select(-ssh, -wind.stress) %>%
+  gather(key="code", value="value", -year)
 
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
 Y <- dcast(melted, code ~ year)
@@ -50,13 +50,233 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 
 rotated = rotate_trends(GOA.clim$best_model) 
 
+# set new names
+new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
+
+# bespoke plotting code
+loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+loadings.2 <- as.data.frame(rotated$Z_rot[,,2])
+names(loadings.1) <- names(loadings.2) <- names
+
+# drop columns that don't meet threshold
+thresh <- 0.9
+
+f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
+  
+prop1 <- apply(loadings.1, 2, f)
+prop2 <- apply(loadings.2, 2, f)  
+
+# so! only Trend 1 includes loadings > 0.9! 
+# this justifies fitting/retaining only a 1-trend model!
+
+# load the 1-trend object
+GOA.clim <- readRDS("GOA_clim_1_trend_original_data.rds") # read in GOA climate model
+
+# recover the years and names for plots!
+goa.clim <- read.csv("updated goa climate data.csv")
+
+sub_data <- goa.clim %>%
+  select(-ssh, -wind.stress) %>%
+  gather(key="code", value="value", -year)
+
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+rotated = rotate_trends(GOA.clim$best_model) 
 
 # set new names
-new.names <- c("East.spring.SST", "East.winter.SST", "GAK1.salinity", "SLP.gradient", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149", "Papa.advection", "West.spr.SST", "West.winter.SST")
+new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
 
 pdf("goa.climate.loadings.pdf", 6,6)
-print(plot_loadings(rotated, names = new.names, threshold=0.9))
+print(plot_loadings(rotated, names = new.names, threshold=0.8))
 dev.off()
+
+plot.trend <- data.frame(year=1950:2019, trend=as.vector(rotated$trends_mean),
+                         lo=as.vector(rotated$trends_lower),
+                         hi=as.vector(rotated$trends_upper))
+
+plot.b <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[3]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") +
+  theme(axis.title.x = element_blank()) + 
+  ggtitle("b) Trend")
+
+png("combined GOA climate loading and trend plot.png", 6, 3, units = "in", res=300)
+
+ggpubr::ggarrange(plot.a, plot.b, ncol=2)
+
+dev.off()
+
+# back to the bespoke code!
+loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+names(loadings.1)  <- new.names
+
+# drop columns that don't meet threshold
+# first, figure out the proportion above/below 0
+f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
+  
+prop1 <- apply(loadings.1, 2, f)
+prop1
+keep <- prop1 > 0.95
+
+loadings.1 <- loadings.1[,keep]
+
+# plot
+plot.load <- loadings.1 %>%
+  gather()
+
+rank <- tapply(plot.load$value, plot.load$key, mean)
+plot.load$rank <- rank[match(plot.load$key, names(rank))]
+  
+plot.load$key <- reorder(plot.load$key, plot.load$rank)
+
+# set pallette
+cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot.a <- ggplot(plot.load, aes(key, value)) +
+  theme_bw() +
+  geom_violin(fill=cb[3]) +
+  geom_hline(yintercept = 0) +
+  theme(axis.title.y = element_blank()) + ylab("Loading") +
+  coord_flip() +
+  ggtitle("a) Loadings")
+
+modelfit <- GOA.clim$best_model
+
+  n_ts <- dim(modelfit$data)[1]
+  n_years <- dim(modelfit$data)[2]
+  pred <- predicted(modelfit)
+   res.df <- data.frame(ID = rep(seq_len(n_ts),
+                                 n_years),
+                        Time = sort(rep(seq_len(n_years), n_ts)), 
+                        mean = c(t(apply(pred, c(3, 4), mean))), 
+                        lo = c(t(apply(pred, c(3, 4), quantile, 0.025))),
+                        hi = c(t(apply(pred, c(3, 4), quantile, 0.975))), 
+                        y = c(modelfit$data)) 
+  
+        res.df$ID <- new.names
+  
+   
+  res.df$year <-  rep(1950:2019, each=n_ts)   
+  
+  res.df$mean.res <- res.df$y - res.df$mean
+  res.df$lo.res <- res.df$y - res.df$lo
+  res.df$hi.res <- res.df$y - res.df$hi
+  
+ plot.these <- names(keep)[keep] 
+  
+ res.df <- res.df %>%
+   filter(ID %in% plot.these)
+ 
+  ggplot(res.df, aes_string(x = "year", y = "mean.res")) + geom_ribbon(aes_string(ymin = "lo.res", 
+        ymax = "hi.res"), fill=cb[3], alpha = 0.4) + geom_line(color=cb[3]) + facet_wrap("ID", 
+        scales = "free_y") + xlab("Year") + ylab("") + geom_hline(yintercept = 0, col=cb[2]) +
+        geom_vline(xintercept = c(1988.5, 2014), lty=2)
+
+
+    
+# acf plot
+    index <- unique(res.df$ID)
+  
+    par(mfrow=c(2,4))
+    for(i in 1:length(index)){
+     # i <- 1
+      temp <- res.df %>%
+        filter(ID==index[i])
+      temp <- na.omit(temp)
+      acf(temp$mean.res, main=index[i]) 
+    }
+
+# so...no autocorrelation concerns with residuals   
+    
+# look at rolling correlations between fitted and observed values, as in Ecology paper
+# using 25-yr rolling windows!
+
+    dfa.cor <- data.frame()    
+
+    for(i in 1:length(index)){    
+      # i <- 1 
+      temp <- res.df %>%
+        filter(ID==index[i])
+      
+       for(ii in 13:58){
+       #  ii <- 13
+          win <- temp[(ii-12):(ii+12),]
+          temp.cor <- data.frame(ID=unique(win$ID),
+                                 year=win$year[13], 
+                                 window=25,
+                                 mean.cor=cor(win$y, win$mean, use="p"),
+                                 n.cor=sum(!is.na(win$y)))
+          dfa.cor <- rbind(dfa.cor, temp.cor)
+       }  }
+
+
+# now the 11-yr windows
+     for(i in 1:length(index)){    
+      # i <- 1 
+      temp <- res.df %>%
+        filter(ID==index[i])
+             for(ii in 6:65){
+       #  ii <- 13
+          win <- temp[(ii-5):(ii+5),]
+          temp.cor <- data.frame(ID=unique(win$ID),
+                                 year=win$year[6],
+                                 window=11,
+                                 mean.cor=cor(win$y, win$mean, use="p"),
+                                 n.cor=sum(!is.na(win$y)))
+          dfa.cor <- rbind(dfa.cor, temp.cor)
+             }  }
+      
+      # and the 15-yr windows
+    for(i in 1:length(index)){    
+      # i <- 1 
+      temp <- res.df %>%
+        filter(ID==index[i])
+      
+             for(ii in 8:63){
+       #  ii <- 13
+          win <- temp[(ii-7):(ii+7),]
+          temp.cor <- data.frame(ID=unique(win$ID),
+                                 year=win$year[8],
+                                 window=15,
+                                 mean.cor=cor(win$y, win$mean, use="p"),
+                                 n.cor=sum(!is.na(win$y)))
+          dfa.cor <- rbind(dfa.cor, temp.cor)
+       }  }
+    
+# remove salinity correlations with < 10 obs
+dfa.cor <- dfa.cor %>%
+  filter(n.cor>=10)
+ dfa.cor$window <- as.factor(dfa.cor$window) 
+ 
+ggplot(dfa.cor, aes(year, mean.cor, color=window)) + 
+  theme_bw() + theme(axis.title.x = element_blank()) +
+  geom_line() + facet_wrap(~ID, 
+        scales = "free_y") + xlab("Year") + ylab("Correlation") 
+
+ggsave("goa climate dfa correlations 11 15 25 year windows.png", height = 4, width=6, units="in")
+
+# and plot 15-yr windows
+ggplot(filter(dfa.cor, window==15), aes(year, mean.cor)) + 
+  theme_bw() + theme(axis.title.x = element_blank()) +
+  geom_line(color=cb[3]) + facet_wrap(~ID, 
+        scales = "free_y") + xlab("Year") + ylab("Correlation") 
+
+ggsave("goa climate dfa correlations 15 year windows.png", height = 4, width=6, units="in")
+
+
+# and plot 25-yr windows
+ggplot(filter(dfa.cor, window==25), aes(year, mean.cor)) + 
+  theme_bw() + theme(axis.title.x = element_blank()) +
+  geom_line(color=cb[3]) + facet_wrap(~ID, 
+        scales = "free_y") + xlab("Year") + ylab("Correlation") 
+
+ggsave("goa climate dfa correlations 25 year windows.png", height = 4, width=6, units="in")
+
 ```
 
 ### Fig. 1B
@@ -64,16 +284,16 @@ GOA climate trends
 
 ```{r, echo=F}
 # trends
-pdf("goa.climate.trends.pdf", 6,6)
-print(plot_trends(rotated, years = as.numeric(colnames(Y))))
-dev.off()
+# pdf("goa.climate.trends.pdf", 6,6)
+# print(plot_trends(rotated, years = as.numeric(colnames(Y))))
+# dev.off()
 ```
 
 Find swans.
 
 ```{r, echo=F}
 xx <- find_swans(rotated, threshold = 0.01, plot=F)
-xx$year <- 1950:2016
+xx$year <- 1950:2019
 xx <- filter(xx, below_threshold == T)
 xx
 ```
@@ -91,19 +311,18 @@ sd_y = apply(rotated$trends, c(2,3), sd)
 set.seed(99)
 f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
 
-# repeat with 2nd and third trends, e.g.
-set.seed(99)
-f2 = find_regimes(y = y[2,], sds = sd_y[2,], max_regimes = 3)
-
 # # repeat with 2nd and third trends, e.g.
+# set.seed(99)
+# f2 = find_regimes(y = y[2,], sds = sd_y[2,], max_regimes = 3)
+# 
+# # # repeat with 2nd and third trends, e.g.
 # set.seed(99)
 # f3 = find_regimes(y = y[3,], sds = sd_y[3,], max_regimes = 3)
 ```
 
 Regime results for Trend 1. The 2-regime model is best-supported, no evidence at this point for a switch to a novel, warmer state.
 
-Results for the other two trends not shown - no evidence of a change in state for those. 
-
+ 
 ```{r, echo=F}
 print(f1$table) # this shows 2-regime model is best
 plot_regime_model(f1$best_model)
