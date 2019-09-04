@@ -115,7 +115,7 @@ plot_regime_model(f1$best_model)
 One trend model was the best.
 
 ```{r, echo=F}
-GOA.biol <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_biol_5.15.18.rds") 
+GOA.biol <- readRDS("GOA_biol_9.4.19.rds") 
 GOA.biol$summary
 ```
 
@@ -124,38 +124,7 @@ GOA.biol$summary
 ```{r, echo=F}
 
 # reload the version of data used
-# load updated ewidata!
-ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
-
-# limit to GOA
-GOA <- ewidata[ewidata$system %in% c("WGOA", "EGOA"),]
-
-# drop CI pinks as they aren't present in odd and even years
-GOA <- filter(GOA, code != "CI.PI")
-
-# drop climate
-drop <- grep("AKCLIM", GOA$code)
-GOA <- GOA[-drop,]
-
-# drop dogfish (too many NAs)
-drop <- grep("DOGF", GOA$code)
-GOA <- GOA[-drop,]
-
-# drop birds and icy strait and chatnam and seward line and CPR
-drop <- c(grep("PROD.", GOA$code), grep("PHEN.", GOA$code), grep("ICY", GOA$code), grep("CHAT", GOA$code), grep("SEWARD", GOA$code), 
-          grep("mesozoo", GOA$code), grep("diatoms", GOA$code), grep("copepod", GOA$code))
-GOA <- GOA[-drop,]
-
-# and start in 1972
-GOA <- GOA[GOA$year>=1972,]
-
-# herring time series are repeats, remove
-drop <- grep("SE.HER.ROE", GOA$code)
-GOA <- GOA[-drop,]
-
-# and drop the ichthyo data
-drop <- grep("ICH", GOA$code)
-GOA <- GOA[-drop,]
+GOA <- read.csv("updated GOA biology data.csv")
 
 # recover the years and names for plots!
 sub_data = GOA
@@ -167,7 +136,7 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 
 rotated = rotate_trends(GOA.biol$best_model) 
 
-new.names <- c("Chignik.coho", "Chignik.pink", "Chiniak.eulachon", "Chiniak.jellyfish", "Chiniak.shrimp", "Cook.Inlet.coho", "Kodiak.coho", "Kodiak.pink", "Pavlof.capelin", "Pavlof.eulachon", "Pavlof.jellyfish", "Pavlof.shrimp", "Prince.William.coho", "Prince.William.pink", "Southeast.coho", "Southeast.herring", "Southeast.pink", "South.Peninsula.coho", "South.Peninsula.pink")
+new.names <- c("Chignik.coho", "Chignik.pink", "Chiniak.eulachon", "Chiniak.jellyfish", "Chiniak.shrimp", "Cook.Inlet.coho", "Kodiak.coho", "Kodiak.pink", "Pavlof.capelin", "Pavlof.eulachon", "Pavlof.jellyfish", "Pavlof.shrimp", "Prince.William.coho", "Southeast.coho", "Southeast.herring", "Southeast.pink", "South.Peninsula.coho", "South.Peninsula.pink")
 
 # loadings
 pdf("goa.biol.loadings.pdf", 6, 6)
