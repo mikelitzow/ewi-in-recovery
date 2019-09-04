@@ -397,9 +397,7 @@ capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
 dev.off() 
 
-
 # now two trends with expanded data
-
 max_trends = 2
 name <- "GOA_clim_2_trends_expanded_data"
 
@@ -452,6 +450,56 @@ sub_data <- goa.clim %>%
   select(-ssh, -wind.stress) %>%
   gather(key="code", value="value", -year)
 
+# ONE! trend model
+# with original data
+max_trends = 1
+name <- "GOA_clim_1_trend_original_data"
+
+# reshape data
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+# do the trend search
+set.seed(99)
+dfa_summary = find_dfa_trends(
+  y = Y,
+  kmax = min(max_trends, nrow(Y)),
+  iter = mcmc_iter,
+  compare_normal = FALSE,
+  variance = c("unequal", "equal"),
+  chains = mcmc_chains
+)
+saveRDS(dfa_summary, file = paste0(name, ".rds"))
+
+# Make default plots (currently work in progress)
+pdf(paste0(name, "_plots.pdf"))
+rotated = rotate_trends(dfa_summary$best_model)
+# trends
+print(plot_trends(rotated, years = as.numeric(colnames(Y))))
+# loadings
+print(plot_loadings(rotated, names = names))
+
+if(ncol(rotated$Z_rot_mean)==2) {
+  plot(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], col="white",
+       xlab="Loading 1", ylab = "Loading 2")
+  text(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], names, cex=0.3)
+  lines(c(-10,10),c(0,0))
+  lines(c(0,0), c(-10,10))
+}
+# predicted values with data
+print(plot_fitted(dfa_summary$best_model,names=names) + 
+        theme(strip.text.x = element_text(size = 6)))
+
+# table of AIC and std errors
+summary_table<-dfa_summary$summary
+capture.output(summary_table, file = paste0(name, "_summary.txt"))
+
+dev.off() 
+
+
+######################
 # two trends with original data
 max_trends = 2
 name <- "GOA_clim_2_trends_original_data"
