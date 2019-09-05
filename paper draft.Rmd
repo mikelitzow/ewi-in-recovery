@@ -18,7 +18,7 @@ library(gtools)
 library(bayesdfa)
 library(assertthat)
 library(rstanarm)
-
+library(tidyverse)
 ```
 
 ## Results
@@ -543,7 +543,7 @@ ggsave("goa biology dfa correlations 11 15 25 year windows.png", height = 4, wid
 # and plot 15-yr windows
 ggplot(filter(dfa.cor, window==15), aes(year, mean.cor)) + 
   theme_bw() + theme(axis.title.x = element_blank()) +
-  geom_line(color=cb[3]) + facet_wrap(~ID, 
+  geom_path(color=cb[3]) + geom_point(color=cb[3]) + facet_wrap(~ID, 
         scales = "free_y") + xlab("Year") + ylab("Correlation") 
 
 ggsave("goa biology dfa correlations 15 year windows.png", height = 4, width=6, units="in")
@@ -562,7 +562,7 @@ ggsave("goa biology dfa correlations 25 year windows.png", height = 5.5, width=8
 
 Test for regime probability. Use n=3 maximum states.
 
-```{r, include=F}
+```{r}
 
 y = apply(rotated$trends, c(2,3), mean)
 sd_y = apply(rotated$trends, c(2,3), sd)
