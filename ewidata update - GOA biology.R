@@ -5,6 +5,7 @@ library(fields)
 library(maps)
 library(mapdata)
 library(zoo)
+library(gtools)
 
 # load updated ewidata!
 ewidata <- read.csv("ewidata.csv", row.names=1)
@@ -123,6 +124,18 @@ ggplot(scaled.pink, aes(year, value)) +
 # put back into GOA
 GOA <- rbind(GOA, scaled.pink)
 
+# load small-mesh P. cod cpue
+
+chini <- read.csv("chiniak.sm.mesh.csv", row.names = 1)
+
+xtra1 <- data.frame(year=chini$year, code="CHI.P.COD.CPUE", value=chini$p.cod, system=NA, subtype=NA)
+
+pav <- read.csv("pav.small mesh cpue.csv", row.names = 1)
+
+xtra2 <- data.frame(year=pav$year, code="PAV.P.COD.CPUE", value=pav$p.cod, system=NA, subtype=NA)
+
+GOA <- rbind(GOA, xtra1, xtra2)
+
 # and save
 write.csv(GOA, "updated GOA biology data.csv", row.names = F)
 
@@ -155,7 +168,7 @@ options(mc.cores = parallel::detectCores())
 sub_data = GOA
 
 # set the name for the model output!
-name <- "GOA_biol_9.4.19"
+name <- "GOA_biol_9.9.19"
 
 # reshape data
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
