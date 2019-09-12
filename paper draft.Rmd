@@ -819,7 +819,7 @@ ggsave("goa biology era sst pdo slopes.png", width=6, height=4, units="in")
 One trend model was again the best.
 
 ```{r, echo=F}
-GOA.ich <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_ich_7.19.18.one.trend.rds") 
+GOA.ich <- readRDS("/Users/MikeLitzow 1/Documents/R/Fate/fate-ewi/GOA_ich_7.19.18.one.trend.rds") 
 GOA.ich$summary
 ```
 
@@ -888,7 +888,9 @@ plot.a <- ggplot(plot.load, aes(key, value)) +
   geom_hline(yintercept = 0) +
   theme(axis.title.y = element_blank()) + ylab("Loading") +
   coord_flip() +
-  ggtitle("a) Ichthyoplankton loadings")
+  ggtitle("a) Ichthyoplankton loadings") +
+  theme(title = element_text(size=8)) 
+  
 
 plot.a
 
@@ -906,8 +908,9 @@ plot.b <- ggplot(plot.trend, aes(year, trend)) +
   geom_line(color=cb[3]) +
   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
   geom_hline(yintercept = 0) + ylab("Trend value") +
-  theme(axis.title.x = element_blank()) + 
-  ggtitle("b) Ichthyoplankton trend")
+  xlab("Year") +
+  ggtitle("b) Ichthyoplankton trend") +
+  theme(title = element_text(size=8))
 
 plot.b
 # png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
@@ -998,14 +1001,24 @@ print(paste("UCI: ", x[(0.975*25000)]))
 # melt.mod <- melt(mod, measure.vars=c("1972-1988", "1989-2013", "2014-2016"))
 # names(melt.mod)[3] <- "era"
 
-ggplot(mod, aes(x=SST)) + geom_density() + geom_hline(yintercept=0) + geom_vline(xintercept = 0, lty=2) + xlab("Slope")
+plot.c <- ggplot(mod, aes(x=SST)) +
+  theme_bw() +
+  geom_density(fill=cb[3]) + 
+  geom_hline(yintercept=0) + 
+  geom_vline(xintercept = 0, lty=2) + 
+  xlab("Slope") + 
+  ylab("Density") +
+  ggtitle(("c) Ichthyoplankton slope on SST")) +
+  theme(title=element_text(size=8))
+
+
 
 ```
 
 Now the zoops model.
 
 ```{r, echo=F}
-GOA.zoop <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_zoop_7.19.18.one.trend.rds") 
+GOA.zoop <- readRDS("/Users/MikeLitzow 1/Documents/R/Fate/fate-ewi/GOA_zoop_7.19.18.one.trend.rds") 
 GOA.zoop$summary
 ```
 
@@ -1097,7 +1110,8 @@ plot.d <- ggplot(plot.load, aes(key, value)) +
   geom_hline(yintercept = 0) +
   theme(axis.title.y = element_blank()) + ylab("Loading") +
   coord_flip() +
-  ggtitle("d) Zooplankton loadings")
+  ggtitle("d) Zooplankton loadings") +
+  theme(title = element_text(size=8))
 
 plot.d
 ```
@@ -1113,9 +1127,9 @@ plot.e <- ggplot(plot.trend, aes(year, trend)) +
   theme_bw() +
   geom_line(color=cb[3]) +
   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
-  geom_hline(yintercept = 0) + ylab("Trend value") +
-  theme(axis.title.x = element_blank()) + 
-  ggtitle("e) Zooplankton trend")
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
+  ggtitle("e) Zooplankton trend") +
+  theme(title = element_text(size=8))
 
 plot.e
 ```
@@ -1182,380 +1196,38 @@ names(cli_dat) = gsub(":","",names(cli_dat))
 cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
 
 set.seed(99)
-mod2 = trend_lm(rotated_modelfit = r, all_years = years,
+mod = trend_lm(rotated_modelfit = r, all_years = years,
   selected_years = years, climate_dat=cli_dat)
 
-summary(mod2)
-
-# get 95% CIs
-x <- sort(mod2[,2])
-print(names(mod2)[2])
-print(paste("median: ", median(x)))
-print(paste("LCI: ", x[(0.025*25000)]))
-print(paste("UCI: ", x[(0.975*25000)]))
-
-mod2$covar <- "SST"
-
-ggplot(mod2, aes(x=covar, y=SST)) + 
-  theme_bw() +
-  geom_violin() + 
-  geom_hline(yintercept=0) + geom_vline(xintercept = 0, lty=2) + xlab("Slope")
-
-```
-
-# Now the EBS results.
-
-```{r, echo=F}
-
-EBS.clim <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/EBS_clim_6.19.18.rds") # read in EBS climate model 
-
-EBS.clim$summary
-```
-
-And the trends and loading plots. 
-
-```{r, echo=F}
-
-# recover the years and names for plots!
-ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
-keep <- grep("AKCLIM_EBS", ewidata$code)
-
-ewidata <- ewidata[keep,]
-sub_data = ewidata
-
-melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
-Y <- dcast(melted, code ~ year)
-names = Y$code
-Y = as.matrix(Y[,-which(names(Y) == "code")])
-
-rotated = rotate_trends(EBS.clim$best_model) 
-
-new.names <- c("Bottom.temp", "Spring.SST", "Winter.SST", "Summer.NW.wind", "Summer.SE.wind", "Winter.NW.wind", "Winter.SE.wind", "Ice.57.75N", "Ice.58.75N", "Ice.64.25N")
-
-# loadings
-pdf("ebs.clim.loadings.pdf", 6, 6)
-print(plot_loadings(rotated, names = new.names, threshold=0.9))
-dev.off()
-
-
-# trends
-pdf("ebs.clim.trend.pdf", 6,6)
-print(plot_trends(rotated, years = as.numeric(colnames(Y))))
-dev.off()
-```
-
-Find swans.
-
-```{r, echo=F}
-xx <- find_swans(rotated, threshold = 0.01, plot=F)
-xx$year <- 1950:2016
-xx <- filter(xx, below_threshold == T)
-xx
-```
-
-Test for regime probability. Use n=3 maximum states to rule out a switch to a warmer state.
-
-```{r, include=F}
-
-y = apply(rotated$trends, c(2,3), mean)
-sd_y = apply(rotated$trends, c(2,3), sd)
-
-# run each trend sequentially through the regimes
-# code to identify (1) number of changes and (2)
-# where those change points occur.
-set.seed(99)
-f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
-
-```
-
-Regime results for Trend 1. The 2-regime model is best-supported.
-
-```{r, echo=F}
-print(f1$table) # this shows 2-regime model is best
-plot_regime_model(f1$best_model)
-```
-
-
-## EBS biology results.
-
-```{r, echo=F}
-EBS.biol <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/EBS_biol_6.19.18.rds") 
-EBS.biol$summary
-```
-
-Now plot trends and loadings.
-
-```{r, echo=F}
-
-# reload the version of data used
-# load updated ewidata!
-ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
-
-# first, EBS biology
-codes <- unique(ewidata$code)
-
-# limit to EBS
-EBS <- ewidata[ewidata$system == "EBS",]
-
-# and start in 1975, when data beyond salmon are first available
-EBS <- EBS[EBS$year>=1975,]
-
-unique(EBS$code)
-
-# drop clim
-drop <- grep("AKCLIM", EBS$code)
-EBS <- EBS[-drop,]
-
-# drop depth
-drop <- grep("DEPTH", EBS$code)
-EBS <- EBS[-drop,]
-
-# recover the years and names for plots!
-sub_data = EBS
-
-melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
-Y <- dcast(melted, code ~ year)
-names = Y$code
-Y = as.matrix(Y[,-which(names(Y) == "code")])
-
-rotated = rotate_trends(EBS.biol$best_model) 
-
-new.names <- c("Alaska.place.lat", "Bristol.Bay.coho", "Bering.flounder.lat", "St.George.kitt.phen", "St.Paul.kitt.phen", "St.Paul.kitt.product", "com.eider.eggs/nest", "com.eider.hatch.date", "com.eider.success", "St.George.com.murre.phenol", "St.Paul.com.murre.phenol", "St.George.com.murre.product", "St.Paul.com.murre.product", "juv.cod.cpue", "juv.pollock.cpue", "flathead.sole.lat", "gl.gull.eggs/nest", "gl.gull.hatch.date", "gl.gull.success", "Grnlnd.turbot.lat", "Pac.cod.lat", "Pac.halibut.lat", "red.king.crab.lat", "rock.sole.lat", "shortf.eelpout.lat", "snow.crab.lat", "spec.eider.eggs/nest", "spec.eider.hatch.date", "spec.eider.success", "sturgeon.poacher.lat", "Tanner.crab.lat", "St.George.tb.murre.phenol", "St.Paul.tb.murre.phenol", "St.George.tb.murre.product", "St.Paul.tb.murre.product", "walleye.pollock.lat", "wattled.eelpout.lat", "yellowfin.sole.lat")
-
-
-# loadings
-pdf("ebs.biol.loadings.pdf", 6, 6)
-print(plot_loadings(rotated, names = new.names, threshold=0.9))
-dev.off()
-
-```
-
-
-```{r, echo=F}
-# trends
-
-pdf("ebs.biol.trend.pdf", 6,6)
-print(plot_trends(rotated, years = as.numeric(colnames(Y))))
-dev.off()
-```
-Test for regime probability. Use n=3 maximum states to rule out a switch to a warmer state.
-
-```{r, include=F}
-
-y = apply(rotated$trends, c(2,3), mean)
-sd_y = apply(rotated$trends, c(2,3), sd)
-
-# run each trend sequentially through the regimes
-# code to identify (1) number of changes and (2)
-# where those change points occur.
-set.seed(99)
-f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
-
-```
-
-Regime results for Trend 1. The 2-regime model is best-supported.
-
-```{r, echo=F}
-print(f1$table) # this shows 2-regime model is best
-plot_regime_model(f1$best_model)
-```
-
-Next step is to examine relationships between SST and the EBS biology trend.
-
-```{r, message=FALSE, results='hide', echo=F}
-
-# load sst as the explanatory variable.
-
-ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
-keep <- grep("AKCLIM_EBS", ewidata$code)
-clim.var <- ewidata[keep,]  
-keep <- grep("win.sst", clim.var$code)
-clim.var <- clim.var[keep,] 
-
-win.sst <- tapply(clim.var$value, clim.var$year, identity)
-
-years <- as.numeric(colnames(EBS.biol$best_model$data)) # these are the years for the biology model - 1975:2016
-
-cli_dat <- data.frame(Year=as.numeric(names(win.sst)), SST=win.sst)
-
-cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(SST = arm::rescale(SST))
-
-
-# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
-
-cli_dat$slope <- 1
-cli_dat$slope[cli_dat$Year %in% 1989:2013] <- 2
-cli_dat$slope[cli_dat$Year %in% 2014:2016] <- 3
-cli_dat$slope <- as.factor(cli_dat$slope)
-
-# rename rotated
-r <- rotated
-
-Y = rnorm(length(cli_dat$slope))
-cli_dat = as.data.frame(model.matrix(Y ~ Year + SST:slope, data=cli_dat))
-# replace ':' in name for formula
-names(cli_dat) = gsub(":","",names(cli_dat))
-# remove named intercept
-cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
-
-set.seed(4)
-mod = trend_lm(rotated_modelfit = r, all_years = 1975:2016,
-  selected_years = 1975:2016, climate_dat=cli_dat)
-
-names(mod)[2:4] <- c("1975-1988", "1989-2013", "2014-2016")
 summary(mod)
 
 # get 95% CIs
-
-for(i in 2:4){
-x <- sort(mod[,i])
-print(names(mod)[i])
+x <- sort(mod[,2])
+print(names(mod)[2])
 print(paste("median: ", median(x)))
 print(paste("LCI: ", x[(0.025*25000)]))
 print(paste("UCI: ", x[(0.975*25000)]))
-}
 
-melt.mod <- melt(mod, measure.vars=c("1975-1988", "1989-2013", "2014-2016"))
-names(melt.mod)[3] <- "era"
-
-pdf("Fig. x ebs.biol.on.sst.pdf", 6, 4)
-ggplot(melt.mod, aes(x=value, color=era)) + geom_density() + geom_hline(yintercept=0) + geom_vline(xintercept = 0, lty=2) + labs(title="A) SST")
-dev.off()
-```
-
-Now the PDO.
-
-```{r, message=FALSE, results='hide', echo=F}
-
-pdo <- read.csv("pdo.csv")
-
-win.pdo <- pdo$NDJFM
-
-years <- as.numeric(colnames(EBS.biol$best_model$data)) # these are the years for the biology model - 1972:2016
-
-# set up climate data
-cli_dat <- data.frame(Year=pdo$YEAR,PDO=win.pdo)
-
-cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(PDO = arm::rescale(PDO))
-
-# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
-
-cli_dat$slope <- 1
-cli_dat$slope[cli_dat$Year %in% 1989:2013] <- 2
-cli_dat$slope[cli_dat$Year %in% 2014:2016] <- 3
-cli_dat$slope <- as.factor(cli_dat$slope)
-
-# rename rotated
-r <- rotated
-
-Y = rnorm(length(cli_dat$slope))
-cli_dat = as.data.frame(model.matrix(Y ~ Year + PDO:slope, data=cli_dat))
-# replace ':' in name for formula
-names(cli_dat) = gsub(":","",names(cli_dat))
-# remove named intercept
-cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
-
-set.seed(99)
-mod2 = trend_lm(rotated_modelfit = r, all_years = 1975:2016,
-  selected_years = 1975:2016, climate_dat=cli_dat)
-
-names(mod2)[2:4] <- c("1975-1988", "1989-2013", "2014-2016")
-
-summary(mod2)
-
-# get 95% CIs
-
-for(i in 2:4){
-x <- sort(mod2[,i])
-print(names(mod2)[i])
-print(paste("median: ", median(x)))
-print(paste("LCI: ", x[(0.025*25000)]))
-print(paste("UCI: ", x[(0.975*25000)]))
-}
-
-
-melt.mod <- melt(mod2, measure.vars=c("1975-1988", "1989-2013", "2014-2016"))
-names(melt.mod)[3] <- "era"
-
-pdf("Fig. x ebs.biol.on.pdo.pdf", 6, 4)
-ggplot(melt.mod, aes(x=value, color=era)) + geom_density() + geom_hline(yintercept=0) + geom_vline(xintercept = 0, lty=2) + labs(title="B) PDO")
-dev.off()
+plot.f <- ggplot(mod, aes(x=SST)) +
+  theme_bw() +
+  geom_density(fill=cb[3]) + 
+  geom_hline(yintercept=0) + 
+  geom_vline(xintercept = 0, lty=2) + 
+  xlab("Slope") + 
+  ylab("Density") +
+  ggtitle(("f) Zooplankton slope on SST")) +
+  theme(title = element_text(size=8))
 
 ```
 
-And the winter AO.
-
-```{r, echo=F}
-
-ao <- read.csv("winter.ao.csv")
-
-win.ao <- ao$NDJFM
-
-years <- as.numeric(colnames(EBS.biol$best_model$data)) # these are the years for the biology model - 1975:2016
-
-# set up climate data
-cli_dat <- data.frame(Year=ao$YEAR,AO=win.ao)
-
-cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(AO = arm::rescale(AO))
-
-# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
-
-cli_dat$slope <- 1
-cli_dat$slope[cli_dat$Year %in% 1989:2013] <- 2
-cli_dat$slope[cli_dat$Year %in% 2014:2016] <- 3
-cli_dat$slope <- as.factor(cli_dat$slope)
-
-# rename rotated
-r <- rotated
-
-Y = rnorm(length(cli_dat$slope))
-cli_dat = as.data.frame(model.matrix(Y ~ Year + AO:slope, data=cli_dat))
-# replace ':' in name for formula
-names(cli_dat) = gsub(":","",names(cli_dat))
-# remove named intercept
-cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
-
-set.seed(99)
-mod3 = trend_lm(rotated_modelfit = r, all_years = 1975:2016,
-  selected_years = 1975:2016, climate_dat=cli_dat)
-
-names(mod3)[2:4] <- c("1975-1988", "1989-2013", "2014-2016")
-
-summary(mod3)
-
-# get 95% CIs
-
-for(i in 2:4){
-x <- sort(mod3[,i])
-print(names(mod3)[i])
-print(paste("median: ", median(x)))
-print(paste("LCI: ", x[(0.025*25000)]))
-print(paste("UCI: ", x[(0.975*25000)]))
-}
-
-# and proportion > 0
-for(i in 2:4){
-x <- sort(mod3[,i])
-print(names(mod3)[i])
-print(paste("prop > 0: ", sum(x > 0)/length(x)))
-}
-
-melt.mod <- melt(mod3, measure.vars=c("1975-1988", "1989-2013", "2014-2016"))
-names(melt.mod)[3] <- "era"
-
-pdf("Fig. x ebs.biol.on.ao.pdf", 6, 4)
-ggplot(melt.mod, aes(x=value, color=era)) + geom_density() + geom_hline(yintercept=0) + geom_vline(xintercept = 0, lty=2) + labs(title="B) AO")
-dev.off()
-```
-
+And combine into a single plot.
 
 ```{r}
-head(melt.mod)
-restricted <- filter(melt.mod, era %in% c("1975-1988", "1989-2013"))
-restricted <- melt.mod
-png("ebs community response to ao.png", 6,4, units="in", res=300)
-ggplot(data=restricted, aes(fill=era, x=era, y=value)) + geom_violin() + coord_flip() + ggtitle("Community response to Arctic Oscillation") +
-  geom_hline(yintercept = 0) + xlab("Era") + ylab("Regression coefficient") + theme_gray() + theme(legend.position = c(0.8, 0.5), legend.title = element_blank())
+png("combined short time series plots.png", 8,5, units="in", res=300)
+
+ggpubr::ggarrange(plot.a, plot.b, plot.c, plot.d, plot.e, plot.f,
+          ncol=3, widths=c(1, 1, 0.8), nrow=2)
+
 dev.off()
 ```
 
