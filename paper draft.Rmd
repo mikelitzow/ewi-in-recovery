@@ -819,7 +819,7 @@ ggsave("goa biology era sst pdo slopes.png", width=6, height=4, units="in")
 One trend model was again the best.
 
 ```{r, echo=F}
-GOA.ich <- readRDS("/Users/MikeLitzow 1/Documents/R/Fate/fate-ewi/GOA_ich_7.19.18.one.trend.rds") 
+GOA.ich <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_ich_7.19.18.one.trend.rds") 
 GOA.ich$summary
 ```
 
@@ -1008,7 +1008,7 @@ plot.c <- ggplot(mod, aes(x=SST)) +
   geom_vline(xintercept = 0, lty=2) + 
   xlab("Slope") + 
   ylab("Density") +
-  ggtitle(("c) Ichthyoplankton slope on SST")) +
+  ggtitle(("c) Ichthyo. slope on SST")) +
   theme(title=element_text(size=8))
 
 
@@ -1018,7 +1018,7 @@ plot.c <- ggplot(mod, aes(x=SST)) +
 Now the zoops model.
 
 ```{r, echo=F}
-GOA.zoop <- readRDS("/Users/MikeLitzow 1/Documents/R/Fate/fate-ewi/GOA_zoop_7.19.18.one.trend.rds") 
+GOA.zoop <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_zoop_7.19.18.one.trend.rds") 
 GOA.zoop$summary
 ```
 
