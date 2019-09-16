@@ -274,6 +274,10 @@ ggplot(filter(dfa.cor, window==25), aes(year, mean.cor)) +
 
 ggsave("goa climate dfa correlations 25 year windows.png", height = 4, width=6, units="in")
 
+# re-run with al climate TS, not just the ones meeting the loadings threshold used above
+
+
+
 ```
 
 ### Fig. 1B
