@@ -546,3 +546,183 @@ summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
 dev.off() 
+
+######################
+# one-trend models fit separately to first 15 and last 15 years of the TS
+sub_data <- goa.clim %>%
+  select(-ssh, -wind.stress, -salinity.20m) %>%
+  filter(year <= 1964) %>%
+  gather(key="code", value="value", -year)
+
+# ONE! trend model
+# with original data
+max_trends = 1
+name <- "GOA_clim_1_trend_original_data_1950_1964"
+
+# reshape data
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+# do the trend search
+set.seed(99)
+dfa_summary = find_dfa_trends(
+  y = Y,
+  kmax = min(max_trends, nrow(Y)),
+  iter = mcmc_iter,
+  compare_normal = FALSE,
+  variance = c("unequal", "equal"),
+  chains = mcmc_chains
+)
+saveRDS(dfa_summary, file = paste0(name, ".rds"))
+
+# Make default plots (currently work in progress)
+pdf(paste0(name, "_plots.pdf"))
+rotated = rotate_trends(dfa_summary$best_model)
+# trends
+print(plot_trends(rotated, years = as.numeric(colnames(Y))))
+# loadings
+print(plot_loadings(rotated, names = names))
+
+if(ncol(rotated$Z_rot_mean)==2) {
+  plot(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], col="white",
+       xlab="Loading 1", ylab = "Loading 2")
+  text(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], names, cex=0.3)
+  lines(c(-10,10),c(0,0))
+  lines(c(0,0), c(-10,10))
+}
+# predicted values with data
+print(plot_fitted(dfa_summary$best_model,names=names) + 
+        theme(strip.text.x = element_text(size = 6)))
+
+# table of AIC and std errors
+summary_table<-dfa_summary$summary
+capture.output(summary_table, file = paste0(name, "_summary.txt"))
+
+dev.off() 
+
+
+# last 15
+sub_data <- goa.clim %>%
+  select(-ssh, -wind.stress, -salinity.20m) %>%
+  filter(year >= 2005) %>%
+  gather(key="code", value="value", -year)
+
+# ONE! trend model
+# with original data
+max_trends = 1
+name <- "GOA_clim_1_trend_original_data_2005_2019"
+
+# reshape data
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+# do the trend search
+set.seed(99)
+dfa_summary = find_dfa_trends(
+  y = Y,
+  kmax = min(max_trends, nrow(Y)),
+  iter = mcmc_iter,
+  compare_normal = FALSE,
+  variance = c("unequal", "equal"),
+  chains = mcmc_chains
+)
+saveRDS(dfa_summary, file = paste0(name, ".rds"))
+
+# Make default plots (currently work in progress)
+pdf(paste0(name, "_plots.pdf"))
+rotated = rotate_trends(dfa_summary$best_model)
+# trends
+print(plot_trends(rotated, years = as.numeric(colnames(Y))))
+# loadings
+print(plot_loadings(rotated, names = names))
+
+if(ncol(rotated$Z_rot_mean)==2) {
+  plot(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], col="white",
+       xlab="Loading 1", ylab = "Loading 2")
+  text(rotated$Z_rot_mean[,1], rotated$Z_rot_mean[,2], names, cex=0.3)
+  lines(c(-10,10),c(0,0))
+  lines(c(0,0), c(-10,10))
+}
+# predicted values with data
+print(plot_fitted(dfa_summary$best_model,names=names) + 
+        theme(strip.text.x = element_text(size = 6)))
+
+# table of AIC and std errors
+summary_table<-dfa_summary$summary
+capture.output(summary_table, file = paste0(name, "_summary.txt"))
+
+dev.off() 
+
+########################################################
+# make an era-specific plot of loadings!
+
+# set colors
+cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+# join posteriors for loadings in the two eras
+# load the first 15 year results
+# load the 1-trend object
+GOA.clim.era1 <- readRDS("GOA_clim_1_trend_original_data_1950_1964.rds") # read in GOA climate model
+
+# recover the years and names for plots!
+goa.clim <- read.csv("updated goa climate data.csv")
+
+sub_data <- goa.clim %>%
+  select(-ssh, -wind.stress, -salinity.20m) %>%
+  gather(key="code", value="value", -year)
+
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+rotated = rotate_trends(GOA.clim.era1$best_model) 
+
+# set new names
+new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
+
+# back to the bespoke code!
+loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+names(loadings.1)  <- new.names
+
+# now....era2
+GOA.clim.era2 <- readRDS("GOA_clim_1_trend_original_data_2005_2019.rds") # read in GOA climate model
+rotated = rotate_trends(GOA.clim.era2$best_model) 
+loadings.2 <- as.data.frame(rotated$Z_rot[,,1])
+names(loadings.2)  <- new.names
+
+loadings.1$era <- "1950-1964"
+loadings.2$era <- "2005-2019"
+
+
+# plot
+plot.load <- cbind(loadings.1, loadings.2) %>%
+  gather(-era)
+
+# rank <- tapply(plot.load$value, plot.load$key, mean)
+# plot.load$rank <- rank[match(plot.load$key, names(rank))]
+# 
+# plot.load$key <- reorder(plot.load$key, plot.load$rank)
+
+# set pallette
+cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot.a <- ggplot(plot.load, aes(key, value)) +
+  theme_bw() +
+  geom_violin(fill=cb[3]) +
+  geom_hline(yintercept = 0) +
+  theme(axis.title.y = element_blank()) + ylab("Loading") +
+  coord_flip() +
+  ggtitle("a) Loadings")
+AL.p <- ggplot(slp, aes(slp.11, fill=era)) + 
+  geom_density(alpha=0.8) +
+  xlim(-700,700) + 
+  scale_fill_manual(values=cb[c(6,8)]) +
+  theme_bw() +
+  theme(legend.position = c(0.2,0.8), legend.title = element_blank()) +
+  xlab("Sea level pressure anomaly (Pa)") +
+  ggtitle("Aleutian Low SLPa distribution")

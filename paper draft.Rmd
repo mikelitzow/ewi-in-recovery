@@ -276,8 +276,56 @@ ggsave("goa climate dfa correlations 25 year windows.png", height = 4, width=6, 
 
 # re-run with al climate TS, not just the ones meeting the loadings threshold used above
 
+# set up res.df with all TS
+   res.df <- data.frame(ID = rep(seq_len(n_ts),
+                                 n_years),
+                        Time = sort(rep(seq_len(n_years), n_ts)), 
+                        mean = c(t(apply(pred, c(3, 4), mean))), 
+                        lo = c(t(apply(pred, c(3, 4), quantile, 0.025))),
+                        hi = c(t(apply(pred, c(3, 4), quantile, 0.975))), 
+                        y = c(modelfit$data)) 
+  
+        res.df$ID <- new.names
+  
+   
+  res.df$year <-  rep(1950:2019, each=n_ts)   
+  
+  res.df$mean.res <- res.df$y - res.df$mean
+  res.df$lo.res <- res.df$y - res.df$lo
+  res.df$hi.res <- res.df$y - res.df$hi
 
+# look at rolling correlations between fitted and observed values, as in Ecology paper
+# using 25-yr rolling windows!
+ index <- unique(res.df$ID)
+    dfa.cor <- data.frame()    
 
+    for(i in 1:length(index)){    
+      # i <- 1 
+      temp <- res.df %>%
+        filter(ID==index[i])
+      
+       for(ii in 13:58){
+       #  ii <- 13
+          win <- temp[(ii-12):(ii+12),]
+          temp.cor <- data.frame(ID=unique(win$ID),
+                                 year=win$year[13], 
+                                 window=25,
+                                 mean.cor=cor(win$y, win$mean, use="p"),
+                                 n.cor=sum(!is.na(win$y)))
+          dfa.cor <- rbind(dfa.cor, temp.cor)
+       }  }
+    
+# remove salinity correlations with < 10 obs
+dfa.cor <- dfa.cor %>%
+  filter(n.cor>=10)
+ dfa.cor$window <- as.factor(dfa.cor$window) 
+
+ggplot(filter(dfa.cor, window==25), aes(year, mean.cor)) + 
+  theme_bw() + theme(axis.title.x = element_blank()) +
+  geom_line(color=cb[3]) + facet_wrap(~ID, 
+        scales = "free_y", ncol=3) + xlab("Year") + ylab("Correlation") 
+
+ggsave("goa climate dfa correlations 25 year windows all TS.png", height = 5, width=6, units="in")    
 ```
 
 ### Fig. 1B
@@ -564,7 +612,88 @@ ggplot(filter(dfa.cor, window==25), aes(year, mean.cor)) +
 
 ggsave("goa biology dfa correlations 25 year windows.png", height = 5.5, width=8, units="in")
 
+# as for climate data, recalculate rolling correlations with all time series
+modelfit <- GOA.biol$best_model
 
+  n_ts <- dim(modelfit$data)[1]
+  n_years <- dim(modelfit$data)[2]
+  pred <- predicted(modelfit)
+   res.df <- data.frame(ID = rep(seq_len(n_ts),
+                                 n_years),
+                        Time = sort(rep(seq_len(n_years), n_ts)), 
+                        mean = c(t(apply(pred, c(3, 4), mean))), 
+                        lo = c(t(apply(pred, c(3, 4), quantile, 0.025))),
+                        hi = c(t(apply(pred, c(3, 4), quantile, 0.975))), 
+                        y = c(modelfit$data)) 
+  
+        res.df$ID <- new.names
+  
+   
+  res.df$year <-  rep(1972:2017, each=n_ts)   
+  
+  res.df$mean.res <- res.df$y - res.df$mean
+  res.df$lo.res <- res.df$y - res.df$lo
+  res.df$hi.res <- res.df$y - res.df$hi
+
+
+modelfit <- GOA.biol$best_model
+
+  n_ts <- dim(modelfit$data)[1]
+  n_years <- dim(modelfit$data)[2]
+  pred <- predicted(modelfit)
+   res.df <- data.frame(ID = rep(seq_len(n_ts),
+                                 n_years),
+                        Time = sort(rep(seq_len(n_years), n_ts)), 
+                        mean = c(t(apply(pred, c(3, 4), mean))), 
+                        lo = c(t(apply(pred, c(3, 4), quantile, 0.025))),
+                        hi = c(t(apply(pred, c(3, 4), quantile, 0.975))), 
+                        y = c(modelfit$data)) 
+  
+        res.df$ID <- new.names
+  
+   
+  res.df$year <-  rep(1972:2017, each=n_ts)   
+  
+  res.df$mean.res <- res.df$y - res.df$mean
+  res.df$lo.res <- res.df$y - res.df$lo
+  res.df$hi.res <- res.df$y - res.df$hi
+  
+  index <- unique(res.df$ID)
+
+# using 25-yr rolling windows!
+
+    dfa.cor <- data.frame()    
+
+    for(i in 1:length(index)){    
+      # i <- 1 
+      temp <- res.df %>%
+        filter(ID==index[i])
+      
+       for(ii in 13:58){
+       #  ii <- 13
+          win <- temp[(ii-12):(ii+12),]
+          temp.cor <- data.frame(ID=unique(win$ID),
+                                 year=win$year[13], 
+                                 window=25,
+                                 mean.cor=cor(win$y, win$mean, use="p"),
+                                 n.cor=sum(!is.na(win$y)))
+          dfa.cor <- rbind(dfa.cor, temp.cor)
+       }  }
+
+    # remove correlations with < 10 obs
+dfa.cor <- dfa.cor %>%
+  filter(n.cor>=10)
+ dfa.cor$window <- as.factor(dfa.cor$window) 
+ 
+dfa.cor <- na.omit(dfa.cor)
+
+# and plot 25-yr windows
+ggplot(filter(dfa.cor, window==25), aes(year, mean.cor)) + 
+  theme_bw() + theme(axis.title.x = element_blank()) +
+  geom_line(color=cb[3]) + facet_wrap(~ID, 
+        scales = "free_y", ncol=4) + xlab("Year") + ylab("Correlation") 
+
+ggsave("goa biology dfa correlations 25 year windows all time series.png", height = 6.5, width=8, units="in")
 ```
 
 Test for regime probability. Use n=3 maximum states.
