@@ -348,6 +348,8 @@ options(mc.cores = parallel::detectCores())
 # find dfa trends with 2 or 3 candidate trends 
 # and original data (as in previous iteration of paper)
 # or expanded data (adding SSH and wind stress)
+goa.clim <- read.csv("updated goa climate data.csv")
+
 sub_data <- goa.clim %>%
   gather(key="code", value="value", -year)
 
@@ -700,8 +702,8 @@ loadings.2$era <- "2005-2019"
 
 
 # plot
-plot.load <- cbind(loadings.1, loadings.2) %>%
-  gather(-era)
+plot.load <- rbind(loadings.1, loadings.2) %>%
+  gather(key, value, -era)
 
 # rank <- tapply(plot.load$value, plot.load$key, mean)
 # plot.load$rank <- rank[match(plot.load$key, names(rank))]
@@ -718,11 +720,10 @@ plot.a <- ggplot(plot.load, aes(key, value)) +
   theme(axis.title.y = element_blank()) + ylab("Loading") +
   coord_flip() +
   ggtitle("a) Loadings")
-AL.p <- ggplot(slp, aes(slp.11, fill=era)) + 
-  geom_density(alpha=0.8) +
-  xlim(-700,700) + 
+
+ggplot(plot.load, aes(value, fill=era)) + 
+  geom_density(alpha=0.5) +
   scale_fill_manual(values=cb[c(6,8)]) +
   theme_bw() +
-  theme(legend.position = c(0.2,0.8), legend.title = element_blank()) +
-  xlab("Sea level pressure anomaly (Pa)") +
-  ggtitle("Aleutian Low SLPa distribution")
+  facet_wrap(~key, scales = "free_y") +
+  xlim(-1.5, 2.5) + geom_vline(xintercept = 0, lty=2)
