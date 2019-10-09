@@ -372,7 +372,7 @@ sd_y = apply(rotated$trends, c(2,3), sd)
 # code to identify (1) number of changes and (2)
 # where those change points occur.
 set.seed(99)
-f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
+f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 5)
 
 # # repeat with 2nd and third trends, e.g.
 # set.seed(99)
@@ -389,6 +389,16 @@ Regime results for Trend 1. The 2-regime model is best-supported, no evidence at
 ```{r, echo=F}
 print(f1$table) # this shows 2-regime model is best
 plot_regime_model(f1$best_model)
+```
+
+```{r}
+# try to extract annual P of each state!
+    # gamma_tk <- rstan::extract(f1$best_model, pars = "gamma_tk")[[1]]
+    # mu_k <- rstan::extract(f1$best_model, pars = "mu_k")[[1]]
+    # l <- apply(gamma_tk, 2:3, quantile, probs = probs[[1]])
+    # u <- apply(gamma_tk, 2:3, quantile, probs = probs[[2]])
+    # med <- apply(gamma_tk, 2:3, quantile, probs = 0.5)
+
 ```
 
 
