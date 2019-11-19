@@ -361,7 +361,7 @@ xx <- filter(xx, below_threshold == T)
 xx
 ```
 
-Test for regime probability. Use n=3 maximum states.
+Test for regime probability. Use n=5 maximum states.
 
 ```{r, include=F}
 
@@ -393,12 +393,18 @@ plot_regime_model(f1$best_model)
 
 ```{r}
 # try to extract annual P of each state!
-    # gamma_tk <- rstan::extract(f1$best_model, pars = "gamma_tk")[[1]]
-    # mu_k <- rstan::extract(f1$best_model, pars = "mu_k")[[1]]
-    # l <- apply(gamma_tk, 2:3, quantile, probs = probs[[1]])
-    # u <- apply(gamma_tk, 2:3, quantile, probs = probs[[2]])
-    # med <- apply(gamma_tk, 2:3, quantile, probs = 0.5)
 
+kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(2))
+
+clim.regimes <- data.frame(year=1950:2019, probability=kk$data$median)
+
+ggplot(clim.regimes, aes(year, probability)) +
+  theme_bw() +
+  geom_line()
+  
+# may be promising to plot all of the regime results together!
+
+clim.regimes$data.set <- "Climate 1950-2019"
 ```
 
 
@@ -706,7 +712,7 @@ ggplot(filter(dfa.cor, window==25), aes(year, mean.cor)) +
 ggsave("goa biology dfa correlations 25 year windows all time series.png", height = 6.5, width=8, units="in")
 ```
 
-Test for regime probability. Use n=3 maximum states.
+Test for regime probability. Use n=5 maximum states.
 
 ```{r}
 
@@ -717,13 +723,26 @@ sd_y = apply(rotated$trends, c(2,3), sd)
 # code to identify (1) number of changes and (2)
 # where those change points occur.
 set.seed(99)
-f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
+f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 5)
 
 
 print(f1$table) # this shows 2-regime model is best
 plot_regime_model(f1$best_model)
 
+# and combined plot
 
+kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(2))
+
+biol.regimes <- data.frame(year=1972:2017, probability=kk$data$median)
+
+biol.regimes$data.set <- "Biology 1972-2017"
+
+plot.regimes <- rbind(clim.regimes, biol.regimes)
+
+ggplot(plot.regimes, aes(year, probability, color=data.set)) +
+  theme_bw() +
+  geom_line()
+  
 ```
 
 
@@ -955,6 +974,19 @@ ggplot(plot.melt, aes(x=era, y=value)) +
   coord_flip()
 
 ggsave("goa biology era sst pdo slopes.png", width=6, height=4, units="in")
+
+# make a SST-only plot
+ggplot(melt.mod, aes(x=value, fill=era)) +
+  theme_bw() + 
+  geom_density(alpha=0.6) +
+  geom_vline(xintercept = 0, lty=2) +
+  scale_fill_manual(values = cb[c(4, 6, 2)]) +
+  theme(legend.title = element_blank(), legend.position = c(0.8, 0.8)) +
+  xlab("Slope") +
+  xlim(-5,12)
+
+ggsave("goa biology era sst slopes.png", width=5, height=4, units="in")
+
 ```
 
 ## GOA ichthyo results.
@@ -1064,7 +1096,7 @@ plot.b
 ```
 
 
-Test for regime probability. Use n=3 maximum states.
+Test for regime probability. Use n=5 maximum states.
 
 ```{r, include=F}
 
@@ -1081,6 +1113,19 @@ f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
 print(f1$table) # this shows 2-regime model is best
 plot_regime_model(f1$best_model)
 
+# and combined plot
+
+kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(1))
+
+ichthyo.regimes <- data.frame(year=plot.trend$year, probability=kk$data$median)
+
+ichthyo.regimes$data.set <- "Ichthyoplankton 1980-2015"
+
+plot.regimes <- rbind(clim.regimes, biol.regimes, ichthyo.regimes)
+
+ggplot(plot.regimes, aes(year, probability, color=data.set)) +
+  theme_bw() +
+  geom_line()
 
 ```
 
@@ -1294,6 +1339,30 @@ f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
 
 print(f1$table) # this shows 2-regime model is best
 plot_regime_model(f1$best_model)
+
+# and combined plot
+
+kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(1))
+
+zoop.regimes <- data.frame(year=plot.trend$year, probability=kk$data$median)
+
+zoop.regimes$data.set <- "Zooplankton 1997-2016"
+
+plot.regimes <- rbind(clim.regimes, biol.regimes, ichthyo.regimes, zoop.regimes)
+
+plot.regimes$plot.order <- ifelse(plot.regimes$data.set=="Climate 1950-2019", 1, 
+                                  ifelse(plot.regimes$data.set=="Biology 1972-2017", 2,
+                                  ifelse(plot.regimes$data.set=="Ichthyoplankton 1980-2015", 3,
+                                  4)))
+plot.regimes$data.set <- reorder(plot.regimes$data.set, plot.regimes$plot.order)
+
+ggplot(plot.regimes, aes(year, probability, color=data.set)) +
+  theme_bw() +
+  geom_line() +
+  theme(axis.title.x = element_blank(), legend.title = element_blank(), legend.position = 'top') + 
+  scale_color_manual(values = cb[c(6,4,2,7,8)], guide=guide_legend(nrow=2)) 
+  
+ggsave("regime probabilities combined.png", width = 5, height = 3.5, units = "in")
 
 ```
 
