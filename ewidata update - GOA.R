@@ -713,14 +713,6 @@ plot.load <- rbind(loadings.1, loadings.2) %>%
 # set pallette
 cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-plot.a <- ggplot(plot.load, aes(key, value)) +
-  theme_bw() +
-  geom_violin(fill=cb[3]) +
-  geom_hline(yintercept = 0) +
-  theme(axis.title.y = element_blank()) + ylab("Loading") +
-  coord_flip() +
-  ggtitle("a) Loadings")
-
 ggplot(plot.load, aes(value, fill=era)) + 
   geom_density(alpha=0.5) +
   scale_fill_manual(values=cb[c(6,8)]) +

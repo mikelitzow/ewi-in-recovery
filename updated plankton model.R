@@ -18,15 +18,24 @@ ewidata <- read.csv("ewidata.csv", row.names=1)
 sew <- read.csv("sewardline.updates.csv")
 
 head(sew)
-cor(sew[,2:9])
+
+# calculate size time series as per Russ' suggestion
+sew$calanoid.size.spring <- sew$LB_Calanoid.Spr / sew$Calanoid.A.spr
+sew$euphaus.size.spring <- sew$LB_Euphaus.Spr / sew$Euphausiid.A.spr
+sew$calanoid.size.sept <- sew$LB_Calanoid.Sep / sew$Calanoid.A.Sept
+sew$euphaus.size.sept <- sew$LB_Euphaus.Sep / sew$Euphausiid.A.Sep
+
+
+cor(sew[,2:13])
 
 # and process
 # I think for now we should just use the biomass variable rather than biomass and abundance
+# and also adding size!
 sew <- sew %>%
-  select(1:5) %>%
+  select(1:5, 10:13) %>%
   gather(key="code", value="value", -year)
 
-ggplot(sew, aes(log(value))) +
+ggplot(sew, aes(value)) +
   theme_bw() +
   geom_histogram(bins=12) +
   facet_wrap(~code, scales="free")
@@ -65,8 +74,57 @@ pp$subtype <- NA
 ewidata <- rbind(ewidata, pp)
 # 
 # # now updated CPR data
-# 
+
+cpr <- read.csv("CPR.2019.csv")
+names(cpr)[1] <- "year"
+cor(cpr[,2:6])
+
+cpr <- cpr %>%
+  gather(key="code", value, -year)
+
+ggplot(cpr, aes(value)) +
+  theme_bw() +
+  geom_histogram(bins=8) +
+  facet_wrap(~code, scales="free")
+# so these are anomalies from log-transformed means and do not need to be transformed again
+
+# append "CPR" to the names
+cpr$code <- paste("CPR_", cpr$code, sep="")
+
+cpr$system <-  "EGOA"
+cpr$subtype <- NA
+
+# drop existing CPR
+
+ewidata <- ewidata %>%
+  filter(code != "copepod") %>%
+  filter(code != "mesozoo") %>%
+  filter(code != "diatoms")
+
 # filter(ewidata, code %in% c("copepod", "mesozoo", "diatoms"))
+
+ewidata <- rbind(ewidata, cpr)
+
+# and finally, ICY strait updates
+# first, drop existing ICY data
+drop <- grep("ICY", ewidata$code)
+ewidata <- ewidata[-drop,]
+
+# and load the new
+icy <- read.csv("icy.data.2019.update.csv")
+
+ggplot(icy, aes(value)) +
+  theme_bw() +
+  geom_histogram(bins=8) +
+  facet_wrap(~code, scales="free")
+
+check <- icy %>%
+  spread(code, value)
+
+cor(check[,4:9])
+
+# combine with ewidata
+ewidata <- rbind(ewidata, icy)
 
 # GoA biology
 
@@ -110,10 +168,10 @@ GOA <- GOA[-drop,]
 drop <- grep("ICH", GOA$code)
 GOA <- GOA[-drop,]
 
-# and try dropping PP duration, as this is bimodal and might give trouble with the model 
-# returning bimodal loadings
-drop <- grep("_dur", GOA$code)
-GOA <- GOA[-drop,]
+# # and try dropping PP duration, as this is bimodal and might give trouble with the model 
+# # returning bimodal loadings
+# drop <- grep("_dur", GOA$code)
+# GOA <- GOA[-drop,]
 
 unique(GOA$code)
 
@@ -124,19 +182,32 @@ ggplot(GOA, aes(x=year, y = value))  +
   facet_wrap(~code, scales = "free_y")  + xlab("Year") +
   ylab("Value")
 
+ggplot(GOA, aes(value))  + 
+  theme_bw() + 
+  geom_histogram(fill="grey", color="black") +
+  facet_wrap(~code, scales = "free")  
+
 # log transform ICY and Seward
 trns <- c(grep("ICY", GOA$code), grep("SEWARD", GOA$code))
 GOA$value[trns] <- log(GOA$value[trns])
 
+# not fitting well - tyr separate models for each?
+keep <- c(grep("PP", GOA$code), grep("CPR", GOA$code))
+GOA <- GOA[keep,]
+
 # and check distributions
 ggplot(GOA, aes(value)) + 
   theme_bw() + 
-  geom_histogram() + facet_wrap(~code, scales="free")
+  geom_histogram(fill="grey", color="black", bins=10) + 
+  facet_wrap(~code, scales="free")
+
+trns <- grep("amp", GOA$code)
+GOA$value[trns] <- log(GOA$value[trns])
 
 sub_data = GOA
 
 # set the name for the model output!
-name <- "GOA_plankton_11.18.19.one.trends"
+name <- "PP_CPR_11.20.19.one.trend"
 
 
 # and now run DFA!
@@ -189,3 +260,5 @@ summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
 dev.off()
+
+
