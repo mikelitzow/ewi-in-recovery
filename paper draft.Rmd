@@ -1795,6 +1795,18 @@ f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
   
 prop1 <- apply(loadings.1, 2, f)
 prop1
+
+# export to share with collaborators
+q.025 <- function(x) {return(quantile(x, probs=0.025))}
+q.975 <- function(x) {return(quantile(x, probs=0.975))}
+export <- data.frame(name=names(loadings.1), mean=colMeans(loadings.1), LCI=apply(loadings.1, 2, q.025), UCI=apply(loadings.1, 2, q.975))
+export[,2:4] <- round(export[,2:4],3)
+export <- export %>%
+  arrange(mean)
+
+write.csv(export, "plankton loadings.csv", row.names = F)
+
+
 keep <- prop1 > 0.95
 
 loadings.1 <- loadings.1[,keep]
