@@ -96,11 +96,14 @@ begin <- middle - 12
 stopifnot(min(orig_and_pred$year) == min(begin))
 stopifnot(max(orig_and_pred$year) == max(end))
 years_df <- data.frame(begin = begin, middle = middle, end = end)
-system.time({
-  out <- purrr::pmap_dfr(years_df, fit_cor_window)
-})
-saveRDS(out, "stan-cor-window-env.rds")
-out <- readRDS("stan-cor-window-env.rds")
+if (!file.exists("stan-cor-window-env.rds")) {
+  system.time({
+    out <- purrr::pmap_dfr(years_df, fit_cor_window)
+  })
+  saveRDS(out, "stan-cor-window-env.rds")
+} else {
+  out <- readRDS("stan-cor-window-env.rds")
+}
 
 out <- left_join(out, tibble(
   var_name = gsub("\\.", " ", new.names),
@@ -187,11 +190,14 @@ begin <- middle - 12
 stopifnot(min(orig_and_pred$year) == min(begin))
 stopifnot(max(orig_and_pred$year) == max(end))
 years_df <- data.frame(begin = begin, middle = middle, end = end)
-system.time({
-  out2 <- purrr::pmap_dfr(years_df, fit_cor_window)
-})
-saveRDS(out2, "stan-cor-window-biol.rds")
-out2 <- readRDS("stan-cor-window-biol.rds")
+if (!file.exists("stan-cor-window-biol.rds")) {
+  system.time({
+    out2 <- purrr::pmap_dfr(years_df, fit_cor_window)
+  })
+  saveRDS(out2, "stan-cor-window-biol.rds")
+} else {
+  out2 <- readRDS("stan-cor-window-biol.rds")
+}
 
 out2 <- left_join(out2, tibble(var_name = gsub("\\.", " ", new.names), variable = 1:length(new.names)))
 out2$var_name <- factor(out2$var_name, levels = gsub("\\.", " ", new.names))
@@ -218,5 +224,6 @@ out2 %>%
   ylab("Correlation") +
   xlab("Year (middle of 25-year window)") +
   theme(axis.title.x = element_blank()) +
-  coord_cartesian(ylim = c(-0.25, 1), expand = FALSE)
-ggsave("figs/stan-cor-window-biol.png", width = 5.5, height = 5.5)
+  scale_x_continuous(breaks = seq(1990, 2010, 10)) +
+  coord_cartesian(ylim = c(-0.35, 1), expand = FALSE)
+ggsave("figs/stan-cor-window-biol.png", width = 6.25, height = 6.25)
