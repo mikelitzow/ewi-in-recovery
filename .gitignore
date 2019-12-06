@@ -4,6 +4,4 @@
 .Ruserdata
 .Rapp.history
 figs
-stan-cor-window-env.rds
-GOA_clim_1_trend_original_data.rds
-GOA_biol_11.4.19.rds
+*.rds
