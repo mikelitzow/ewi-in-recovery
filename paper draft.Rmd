@@ -94,12 +94,14 @@ plot.trend <- data.frame(year=1950:2019, trend=as.vector(rotated$trends_mean),
                          lo=as.vector(rotated$trends_lower),
                          hi=as.vector(rotated$trends_upper))
 
+# set palette
+cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 plot.b <- ggplot(plot.trend, aes(year, trend)) +
   theme_bw() +
   geom_line(color=cb[3]) +
   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
-  geom_hline(yintercept = 0) + ylab("Trend value") +
-  theme(axis.title.x = element_blank()) + 
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
   ggtitle("b) Trend")
 
 png("combined GOA climate loading and trend plot.png", 6, 3, units = "in", res=300)
@@ -136,11 +138,12 @@ cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E
 
 plot.a <- ggplot(plot.load, aes(key, value)) +
   theme_bw() +
-  geom_violin(fill=cb[3]) +
+  geom_violin(fill=cb[3], color=NA) +
   geom_hline(yintercept = 0) +
   theme(axis.title.y = element_blank()) + ylab("Loading") +
   coord_flip() +
-  ggtitle("a) Loadings")
+  ggtitle("a) Loadings") +
+  ylim(-2,2)
 
 modelfit <- GOA.clim$best_model
 
