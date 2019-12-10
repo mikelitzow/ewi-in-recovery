@@ -1132,7 +1132,6 @@ ggplot(plot.regimes, aes(year, probability, color=data.set)) +
 
 ```
 
-
 Next step is to examine relationships between SST and the ichthyo trend.
 
 We're interested in testing the hypothesis that the slope on sst was greater during 1972:1988 (high Aleutian Low variance) than during 1989:2013 (low Aleutian Low variance). Also interested in asking which of these periods the 2014-106 heat wave years are most similar to.
@@ -1207,69 +1206,36 @@ plot.c <- ggplot(mod, aes(x=SST)) +
 ```
 
 Now the zoops model.
-
+These are now fit as three models- one for Seward Line, one for Icy Strait, one for large-scale (CPR & PP)
 ```{r, echo=F}
-GOA.zoop <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_zoop_7.19.18.one.trend.rds") 
-GOA.zoop$summary
+seward <- readRDS("Sewardline_11.19.19.one.trend.rds") 
+seward$summary
 ```
 
 ```{r, echo=F}
 
 # load updated ewidata!
-ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
+ewidata <- as.tibble(read.csv("ewidata.plankton.updated.csv"))
 
-# limit to GOA
-GOA <- ewidata[ewidata$system %in% c("WGOA", "EGOA"),]
-unique(GOA$code)
+keep <- grep("SEWARD", ewidata$code)
+seward.dat <- ewidata[keep,]
+unique(seward.dat$code)
 
-# drop salmon
-drop <- grep("PI", GOA$code)
-GOA <- GOA[-drop,]
 
-drop <- grep("CO", GOA$code)
-GOA <- GOA[-drop,]
-
-# drop climate
-drop <- grep("AKCLIM", GOA$code)
-GOA <- GOA[-drop,]
-
-unique(GOA$code)
-
-# drop Pavlof and Chiniak and herring and kittiwakes
-drop <- grep("PAV", GOA$code)
-GOA <- GOA[-drop,]
-
-drop <- grep("CHI", GOA$code)
-GOA <- GOA[-drop,]
-
-drop <- grep("HER", GOA$code)
-GOA <- GOA[-drop,]
-
-drop <- grep("BLKI", GOA$code)
-GOA <- GOA[-drop,]
-
-# drop total icy zoops!
-drop <- grep("ICY.ZOOP.TOTDEN", GOA$code)
-GOA <- GOA[-drop,]
-
-# and drop ichthyoplankton
-drop <- grep("ICH", GOA$code)
-GOA <- GOA[-drop,]
-
-unique(GOA$code)
 # recover the years and names for plots!
-sub_data = GOA
+sub_data = seward.dat
 
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
 Y <- dcast(melted, code ~ year)
 names = Y$code
 Y = as.matrix(Y[,-which(names(Y) == "code")])
 
-rotated = rotate_trends(GOA.zoop$best_model) 
+rotated = rotate_trends(seward$best_model) 
 
-new.names <- c("CPR.copepods", "CPR.diatoms", "Icy.Str.amphipods", "Icy.Str.euphausids", "Icy.Str.gastropods", "CPR.mesozooplankton", "Seward.A.calanoid", "Seward.A.euphausid", "Seward.B.calanoid", "Seward.B.euphausid", "Seward.LA.euphausid", "Seward.LB.calanoid", "Seward.LB.euphausid", "Seward.calanoid.size", "Seward.euphausid.size", "Seward.LA.calanoid")
+new.names <- c("Calanoid.size.Sept", "Calanoid.size.May", "Euphausid.size.Sept", "Euphausid.size.May",
+               "Calanoid.biomass.Sept", "Calanoid.biomass.May", "Euphausid.biomass.Sept", "Euphausid.biomass.May")
 
- # back to the bespoke code!
+# back to the bespoke code!
 loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
 names(loadings.1)  <- new.names
 
@@ -1301,7 +1267,7 @@ plot.d <- ggplot(plot.load, aes(key, value)) +
   geom_hline(yintercept = 0) +
   theme(axis.title.y = element_blank()) + ylab("Loading") +
   coord_flip() +
-  ggtitle("d) Zooplankton loadings") +
+  ggtitle("d) Sewardline loadings") +
   theme(title = element_text(size=8))
 
 plot.d
@@ -1319,7 +1285,7 @@ plot.e <- ggplot(plot.trend, aes(year, trend)) +
   geom_line(color=cb[3]) +
   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
   geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
-  ggtitle("e) Zooplankton trend") +
+  ggtitle("e) Sewardline trend") +
   theme(title = element_text(size=8))
 
 plot.e
@@ -1347,9 +1313,9 @@ plot_regime_model(f1$best_model)
 
 kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(1))
 
-zoop.regimes <- data.frame(year=plot.trend$year, probability=kk$data$median)
+seward.regimes <- data.frame(year=plot.trend$year, probability=kk$data$median)
 
-zoop.regimes$data.set <- "Zooplankton 1997-2016"
+seward.regimes$data.set <- "Sewardline 1998-2018"
 
 plot.regimes <- rbind(clim.regimes, biol.regimes, ichthyo.regimes, zoop.regimes)
 
@@ -1386,7 +1352,7 @@ clim.var <- ewidata[,keep] %>%
 
 win.sst <- tapply(clim.var$value, clim.var$year, mean)
 
-years <- as.numeric(colnames(GOA.zoop$best_model$data)) 
+years <- as.numeric(colnames(seward$best_model$data)) 
 
 # set up climate data
 cli_dat <- data.frame(Year=as.numeric(names(win.sst)),SST=win.sst)
@@ -1430,19 +1396,616 @@ plot.f <- ggplot(mod, aes(x=SST)) +
   geom_vline(xintercept = 0, lty=2) + 
   xlab("Slope") + 
   ylab("Density") +
-  ggtitle(("f) Zooplankton slope on SST")) +
+  ggtitle(("f) Sewardline slope on SST")) +
   theme(title = element_text(size=8))
+
+```
+
+Now the icy strait model.
+
+```{r, echo=F}
+icy <- readRDS("ICY_11.20.19.one.trend.rds") 
+icy$summary
+```
+
+```{r, echo=F}
+
+# load updated ewidata!
+ewidata <- as.tibble(read.csv("ewidata.plankton.updated.csv"))
+
+keep <- grep("ICY", ewidata$code)
+icy.dat <- ewidata[keep,]
+unique(icy.dat$code)
+
+# drop total density
+drop <- grep("TOTDEN", icy.dat$code)
+icy.dat <- icy.dat[-drop,]
+
+# recover the years and names for plots!
+sub_data = icy.dat
+
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+rotated = rotate_trends(icy$best_model) 
+
+new.names <- c("Amphiphod", "Large.copepod", "Small.copepod", "Euphausid",
+               "Gastropod")
+
+# back to the bespoke code!
+loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+names(loadings.1)  <- new.names
+
+# drop columns that don't meet threshold
+# first, figure out the proportion above/below 0
+f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
+  
+prop1 <- apply(loadings.1, 2, f)
+prop1
+keep <- prop1 > 0.95
+
+loadings.1 <- loadings.1[,keep]
+
+# plot
+# AND THERE IS ONLY ONE TS WITH > 0.95 LOADINGS!
+plot.load <- loadings.1 %>%
+  gather()
+
+rank <- tapply(plot.load$value, plot.load$key, mean)
+plot.load$rank <- rank[match(plot.load$key, names(rank))]
+  
+plot.load$key <- reorder(plot.load$key, plot.load$rank)
+
+# set pallette
+cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot.d <- ggplot(plot.load, aes(key, value)) +
+  theme_bw() +
+  geom_violin(fill=cb[3]) +
+  geom_hline(yintercept = 0) +
+  theme(axis.title.y = element_blank()) + ylab("Loading") +
+  coord_flip() +
+  ggtitle("d) Sewardline loadings") +
+  theme(title = element_text(size=8))
+
+plot.d
+```
+
+Now the large-scale!
+
+```{r, echo=F}
+large <- readRDS("PP_CPR_11.20.19.one.trend.rds") 
+large$summary
+```
+
+```{r, echo=F}
+
+# load updated ewidata!
+ewidata <- as.tibble(read.csv("ewidata.plankton.updated.csv"))
+
+keep <- c(grep("PP", ewidata$code), grep("CPR", ewidata$code))
+large.dat <- ewidata[keep,]
+unique(large.dat$code)
+
+
+# recover the years and names for plots!
+sub_data = large.dat
+
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+rotated = rotate_trends(large$best_model) 
+
+new.names <- c("Copepod.size", "Diatom.abundance", "Large.copepod.abundance", "Mesozoop.abundance",
+               "Small.copepod.abundance", "Bloom.amplitude", "Bloom.duration", "Bloom.start")
+
+# back to the bespoke code!
+loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+names(loadings.1)  <- new.names
+
+# drop columns that don't meet threshold
+# first, figure out the proportion above/below 0
+f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
+  
+prop1 <- apply(loadings.1, 2, f)
+prop1
+keep <- prop1 > 0.95
+
+loadings.1 <- loadings.1[,keep]
+
+# plot
+plot.load <- loadings.1 %>%
+  gather()
+
+rank <- tapply(plot.load$value, plot.load$key, mean)
+plot.load$rank <- rank[match(plot.load$key, names(rank))]
+  
+plot.load$key <- reorder(plot.load$key, plot.load$rank)
+
+# set pallette
+cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot.g <- ggplot(plot.load, aes(key, value)) +
+  theme_bw() +
+  geom_violin(fill=cb[3]) +
+  geom_hline(yintercept = 0) +
+  theme(axis.title.y = element_blank()) + ylab("Loading") +
+  coord_flip() +
+  ggtitle("g) Large-scale loadings") +
+  theme(title = element_text(size=8))
+
+plot.g
+```
+
+```{r, echo=F}
+# trends
+plot.trend <- data.frame(year=as.numeric(as.character(colnames(Y))), trend=as.vector(rotated$trends_mean),
+                         lo=as.vector(rotated$trends_lower),
+                         hi=as.vector(rotated$trends_upper))
+
+plot.h <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[3]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
+  ggtitle("h) Large-scale trend") +
+  theme(title = element_text(size=8))
+
+plot.h
+```
+
+Now test for SST effect.
+```{r, include=F}
+#  load sst as the explanatory variable.
+ewidata <- read.csv("updated goa climate data.csv", row.names=1)
+
+keep <- grep("win.sst", colnames(ewidata))
+
+clim.var <- ewidata[,keep] %>%
+  mutate(year=1950:2019) %>%
+  gather(key, value, -year)
+
+win.sst <- tapply(clim.var$value, clim.var$year, mean)
+
+years <- as.numeric(colnames(seward$best_model$data)) 
+
+# set up climate data
+cli_dat <- data.frame(Year=as.numeric(names(win.sst)),SST=win.sst)
+
+cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(SST = arm::rescale(SST))
+
+# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
+
+cli_dat$slope <- 1
+#cli_dat$slope[cli_dat$Year %in% 1997:2013] <- 2
+#cli_dat$slope[cli_dat$Year %in% 2014:2016] <- 3
+cli_dat$slope <- as.factor(cli_dat$slope)
+
+# rename rotated
+r <- rotated
+
+Y = rnorm(length(cli_dat$slope))
+cli_dat = as.data.frame(model.matrix(Y ~ Year + SST, data=cli_dat))
+# replace ':' in name for formula
+names(cli_dat) = gsub(":","",names(cli_dat))
+# remove named intercept
+cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
+
+set.seed(99)
+mod = trend_lm(rotated_modelfit = r, all_years = years,
+  selected_years = years, climate_dat=cli_dat)
+
+summary(mod)
+
+# get 95% CIs
+x <- sort(mod[,2])
+print(names(mod)[2])
+print(paste("median: ", median(x)))
+print(paste("LCI: ", x[(0.025*25000)]))
+print(paste("UCI: ", x[(0.975*25000)]))
+
+plot.i <- ggplot(mod, aes(x=SST)) +
+  theme_bw() +
+  geom_density(fill=cb[3]) + 
+  geom_hline(yintercept=0) + 
+  geom_vline(xintercept = 0, lty=2) + 
+  xlab("Slope") + 
+  ylab("Density") +
+  ggtitle(("i) Large-scale slope on SST")) +
+  theme(title = element_text(size=8))
+
+```
+
+Look at era-specific effects.
+```{r, include=F}
+# first, define the function
+# increasing to 4000 iterations!
+trend_lm <- function(rotated_modelfit,
+  all_years, selected_years,
+  climate_dat = NULL,
+  trend_number = 1, samples = 50,
+  ITER = 4000, CHAINS = 1, n_eff = 50, rhat = 1.1, show_plot = TRUE) { # increasing from 1000 to 4000 iterations to help plankton model converge
+
+  total_mcmc <- dim(rotated_modelfit$trends)[1]
+  draws <- sample(seq_len(total_mcmc), samples)
+
+  yrs_i <- which(all_years %in% selected_years)
+  climate_dat <- dplyr::filter(climate_dat, Year %in% selected_years)
+
+  predictor_name = names(climate_dat)[which(names(climate_dat) != "Year")]
+  formula_str = paste("dfa_trend_draw ~", predictor_name[1])
+  if(length(predictor_name) > 1) {
+    for(i in 2:length(predictor_name)) {formula_str = paste(formula_str, predictor_name[i], sep=" + ")}
+  }
+  formula <- as.formula(formula_str)
+
+  post <- list()
+  for (i in seq_along(draws)) {
+    dd = climate_dat
+    dd$dfa_trend_draw = rotated_modelfit$trends[draws[i], trend_number, yrs_i]
+    m_temp <- stan_glm(formula, data = dd,
+      iter = ITER, chains = CHAINS)
+    assert_that(all(m_temp$stan_summary[,"Rhat"] < rhat))
+    assert_that(all(m_temp$stan_summary[,"n_eff"] > n_eff))
+    post[[i]] <- as.data.frame(as.matrix(m_temp))
+  }
+  post_all <- dplyr::bind_rows(post)
+
+  if (show_plot) {
+    #par(mfrow = c(1, 2))
+    #plot(post_all[,predictor], type = "l", col = "#00000080", lwd = 0.5)
+    #abline(v = seq(0, ITER * length(draws), ITER), col = "#FF000050")
+    #plot(density(post_all[,predictor]))
+    #abline(v = 0, col = "#00000050")
+  }
+  invisible(post_all)
+}
+
+#  load sst as the explanatory variable.
+
+ewidata <- read.csv("updated goa climate data.csv", row.names=1)
+
+keep <- grep("win.sst", colnames(ewidata))
+
+clim.var <- ewidata[,keep] %>%
+  mutate(year=1950:2019) %>%
+  gather(key, value, -year)
+
+win.sst <- tapply(clim.var$value, clim.var$year, mean)
+
+years <- as.numeric(colnames(large$best_model$data)) # these are the years for the biology model - 1972:2016
+
+# set up climate data
+cli_dat <- data.frame(Year=as.numeric(names(win.sst)),SST=win.sst)
+
+cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(SST = arm::rescale(SST))
+
+# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
+
+cli_dat$slope <- 1
+cli_dat$slope[cli_dat$Year %in% 2014:2019] <- 2
+cli_dat$slope <- as.factor(cli_dat$slope)
+
+# rename rotated
+r <- rotated
+
+Y = rnorm(length(cli_dat$slope))
+cli_dat = as.data.frame(model.matrix(Y ~ Year + SST:slope, data=cli_dat))
+# replace ':' in name for formula
+names(cli_dat) = gsub(":","",names(cli_dat))
+# remove named intercept
+cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
+
+set.seed(99)
+mod = trend_lm(rotated_modelfit = r, all_years = 1998:2019,
+  selected_years = 1998:2019, climate_dat=cli_dat)
+
+names(mod)[2:3] <- c("1998-2013", "2014-2019")
+summary(mod)
+
+# get 95% CIs
+
+for(i in 2:3){
+x <- sort(mod[,i])
+print(names(mod)[i])
+print(paste("median: ", median(x)))
+print(paste("LCI: ", x[(0.025*25000)]))
+print(paste("UCI: ", x[(0.975*25000)]))
+}
+
+melt.mod <- melt(mod, measure.vars=c("1998-2013", "2014-2019"))
+names(melt.mod)[3] <- "era"
+melt.mod$covar <- "SST"
+
+
+# make a SST-only plot
+ggplot(melt.mod, aes(x=value, fill=era)) +
+  theme_bw() + 
+  geom_density(alpha=0.6) +
+  geom_vline(xintercept = 0, lty=2) +
+  scale_fill_manual(values = cb[c(6, 2)]) +
+  theme(legend.title = element_blank(), legend.position = c(0.8, 0.8)) +
+  xlab("Slope") #+
+  #xlim(-5,12)
+
+ggsave("large area era sst slopes.png", width=5, height=4, units="in")
 
 ```
 
 And combine into a single plot.
 
 ```{r}
-png("combined short time series plots.png", 8,5, units="in", res=300)
+png("combined updated plankton time series plots.png", 8,7.5, units="in", res=300)
 
-ggpubr::ggarrange(plot.a, plot.b, plot.c, plot.d, plot.e, plot.f,
-          ncol=3, widths=c(1, 1, 0.8), nrow=2)
+ggpubr::ggarrange(plot.a, plot.b, plot.c, plot.d, plot.e, plot.f, plot.g, plot.h, plot.i,
+          ncol=3, widths=c(1, 1, 0.8), nrow=3)
 
 dev.off()
+```
+
+Or, much better! I ran a single model for the entire plankton TS and this appears to work...
+
+```{r, echo=F}
+all <- readRDS("all_plankton_11.20.19.one.trend.rds") 
+all$summary
+```
+
+```{r, echo=F}
+
+# load updated ewidata!
+ewidata <- as.tibble(read.csv("ewidata.plankton.updated.csv"))
+
+GOA <- ewidata
+
+# drop total icy zoops!
+drop <- grep("ICY.ZOOP.TOTDEN", GOA$code)
+GOA <- GOA[-drop,]
+
+# select ICY, PP, Seward, CPR, and ichthyo!
+keep <- c(grep("ICY", GOA$code), grep("PP_", GOA$code), grep("CPR", GOA$code), grep("SEWAR", GOA$code), grep("ICH", GOA$code))
+GOA <- GOA[keep,]
+
+# recover the years and names for plots!
+sub_data = GOA
+
+melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
+Y <- dcast(melted, code ~ year)
+names = Y$code
+Y = as.matrix(Y[,-which(names(Y) == "code")])
+
+rotated = rotate_trends(all$best_model) 
+
+new.names <- c("CPR copepod size", "CPR diatom", "CPR large copepod", "CPR mesozooplankton", "CPR small copepod", "Ichthyo. - sand lance", 
+               "Ichthyo. - ronquils", "Ichthyo. - pollock", "Ichthyo. - Pacific cod", "Ichthyo. - flathead sole", "Ichthyo. - rock sole", "Ichthyo. - rockfishes", "Icy Strait amphipod",
+               "Icy Strait large copepod", "Icy Strait small copepod", "Icy Strait euphausid", "Icy Strait gastropod", "Bloom amplitude", "Bloom duration", "Bloom start", "Seward calanoid size Sept.",
+               "Seward calanoid size May", "Seward euphausid size Sept.", "Seward euphausid size May", "Seward calanoid Sept.", "Seward calanoid May", "Seward euphausid Sept.", "Seward euphausid May")
+
+# and check
+check <- data.frame(names, new.names)
+check
+
+# back to the bespoke code!
+loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+names(loadings.1)  <- new.names
+
+# drop columns that don't meet threshold
+# first, figure out the proportion above/below 0
+f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
+  
+prop1 <- apply(loadings.1, 2, f)
+prop1
+
+# export to share with collaborators
+q.025 <- function(x) {return(quantile(x, probs=0.025))}
+q.975 <- function(x) {return(quantile(x, probs=0.975))}
+export <- data.frame(name=names(loadings.1), mean=colMeans(loadings.1), LCI=apply(loadings.1, 2, q.025), UCI=apply(loadings.1, 2, q.975))
+export[,2:4] <- round(export[,2:4],3)
+export <- export %>%
+  arrange(mean)
+
+write.csv(export, "plankton loadings.csv", row.names = F)
+
+
+keep <- prop1 > 0.95
+
+loadings.1 <- loadings.1[,keep]
+
+# plot
+
+plot.load <- loadings.1 %>%
+  gather()
+
+rank <- tapply(plot.load$value, plot.load$key, mean)
+plot.load$rank <- rank[match(plot.load$key, names(rank))]
+  
+plot.load$key <- reorder(plot.load$key, plot.load$rank)
+
+# set pallette
+cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+plot.a <- ggplot(plot.load, aes(key, value)) +
+  theme_bw() +
+  geom_violin(fill=cb[3], color=NA) +
+  geom_hline(yintercept = 0) +
+  theme(axis.title.y = element_blank()) + ylab("Loading") +
+  coord_flip() +
+  ggtitle("a) Plankton loadings") +
+  theme(title = element_text(size=8)) +
+  ylim(-2.5,2.5)
+
+plot.a
+```
+
+And trend.
+
+```{r, echo=F}
+# trends
+plot.trend <- data.frame(year=as.numeric(as.character(colnames(Y))), trend=as.vector(rotated$trends_mean),
+                         lo=as.vector(rotated$trends_lower),
+                         hi=as.vector(rotated$trends_upper))
+
+plot.b <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[3]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
+  ggtitle("b) Plankton trend") +
+  theme(title = element_text(size=8))
+
+plot.b
+```
+
+Now the slope on SST.
+
+```{r, include=F}
+#  load sst as the explanatory variable.
+ewidata <- read.csv("updated goa climate data.csv", row.names=1)
+
+keep <- grep("win.sst", colnames(ewidata))
+
+clim.var <- ewidata[,keep] %>%
+  mutate(year=1950:2019) %>%
+  gather(key, value, -year)
+
+win.sst <- tapply(clim.var$value, clim.var$year, mean)
+
+years <- as.numeric(colnames(all$best_model$data)) 
+
+# set up climate data
+cli_dat <- data.frame(Year=as.numeric(names(win.sst)),SST=win.sst)
+
+cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(SST = arm::rescale(SST))
+
+# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
+
+cli_dat$slope <- 1
+#cli_dat$slope[cli_dat$Year %in% 1997:2013] <- 2
+#cli_dat$slope[cli_dat$Year %in% 2014:2016] <- 3
+cli_dat$slope <- as.factor(cli_dat$slope)
+
+# rename rotated
+r <- rotated
+
+Y = rnorm(length(cli_dat$slope))
+cli_dat = as.data.frame(model.matrix(Y ~ Year + SST, data=cli_dat))
+# replace ':' in name for formula
+names(cli_dat) = gsub(":","",names(cli_dat))
+# remove named intercept
+cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
+
+set.seed(99)
+mod = trend_lm(rotated_modelfit = r, all_years = years,
+  selected_years = years, climate_dat=cli_dat)
+
+summary(mod)
+
+# get 95% CIs
+x <- sort(mod[,2])
+print(names(mod)[2])
+print(paste("median: ", median(x)))
+print(paste("LCI: ", x[(0.025*25000)]))
+print(paste("UCI: ", x[(0.975*25000)]))
+
+plot.c <- ggplot(mod, aes(x=SST)) +
+  theme_bw() +
+  geom_density(fill=cb[3]) + 
+  geom_hline(yintercept=0) + 
+  geom_vline(xintercept = 0, lty=2) + 
+  xlab("Slope") + 
+  ylab("Density") +
+  ggtitle(("c) Plankton slope on SST")) +
+  theme(title = element_text(size=8))
+
+plot.c
+```
+
+And combine into a single plot.
+
+```{r}
+png("combined all plankton time series plots.png", 8, 2.5, units="in", res=300)
+
+ggpubr::ggarrange(plot.a, plot.b, plot.c,
+          ncol=3, widths=c(1, 1, 0.8), nrow=1)
+
+dev.off()
+```
+
+Bimodal - evidence of nonstationary slope?
+
+```{r}
+
+#  load sst as the explanatory variable.
+
+ewidata <- read.csv("updated goa climate data.csv", row.names=1)
+
+keep <- grep("win.sst", colnames(ewidata))
+
+clim.var <- ewidata[,keep] %>%
+  mutate(year=1950:2019) %>%
+  gather(key, value, -year)
+
+win.sst <- tapply(clim.var$value, clim.var$year, mean)
+
+years <- as.numeric(colnames(all$best_model$data)) # these are the years for the biology model - 1972:2016
+
+# set up climate data
+cli_dat <- data.frame(Year=as.numeric(names(win.sst)),SST=win.sst)
+
+cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(SST = arm::rescale(SST))
+
+# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
+
+cli_dat$slope <- 1
+cli_dat$slope[cli_dat$Year %in% 1989:2013] <- 2
+cli_dat$slope[cli_dat$Year %in% 2014:2019] <- 3
+cli_dat$slope <- as.factor(cli_dat$slope)
+
+# rename rotated
+r <- rotated
+
+Y = rnorm(length(cli_dat$slope))
+cli_dat = as.data.frame(model.matrix(Y ~ Year + SST:slope, data=cli_dat))
+# replace ':' in name for formula
+names(cli_dat) = gsub(":","",names(cli_dat))
+# remove named intercept
+cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
+
+set.seed(99)
+mod = trend_lm(rotated_modelfit = r, all_years = years[years %in% 1981:2019],
+  selected_years = years[years %in% 1981:2019], climate_dat=cli_dat)
+
+names(mod)[2:4] <- c("1981-1988", "1989-2013", "2014-2017")
+summary(mod)
+
+# get 95% CIs
+
+for(i in 2:4){
+x <- sort(mod[,i])
+print(names(mod)[i])
+print(paste("median: ", median(x)))
+print(paste("LCI: ", x[(0.025*25000)]))
+print(paste("UCI: ", x[(0.975*25000)]))
+}
+
+melt.mod <- melt(mod, measure.vars=c("1981-1988", "1989-2013", "2014-2017"))
+names(melt.mod)[3] <- "era"
+melt.mod$covar <- "SST"
+
+# and plot
+# make a SST-only plot
+ggplot(melt.mod, aes(x=value, fill=era)) +
+  theme_bw() + 
+  geom_density(alpha=0.6) +
+  geom_vline(xintercept = 0, lty=2) +
+  scale_fill_manual(values = cb[c(4, 6, 2)]) +
+  theme(legend.title = element_blank(), legend.position = c(0.8, 0.8)) +
+  xlab("Slope") +
+  xlim(-8,7)
+
+ggsave("all plankton era sst slopes.png", width=5, height=4, units="in")
 ```
 
