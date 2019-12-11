@@ -104,11 +104,6 @@ plot.b <- ggplot(plot.trend, aes(year, trend)) +
   geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
   ggtitle("b) Trend")
 
-png("combined GOA climate loading and trend plot.png", 6, 3, units = "in", res=300)
-
-ggpubr::ggarrange(plot.a, plot.b, ncol=2)
-
-dev.off()
 
 # back to the bespoke code!
 loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
@@ -120,7 +115,7 @@ f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
   
 prop1 <- apply(loadings.1, 2, f)
 prop1
-keep <- prop1 > 0.95
+keep <- prop1 > 0.90 # changing to 0.90 threshold!
 
 loadings.1 <- loadings.1[,keep]
 
@@ -144,6 +139,12 @@ plot.a <- ggplot(plot.load, aes(key, value)) +
   coord_flip() +
   ggtitle("a) Loadings") +
   ylim(-2,2)
+
+png("combined GOA climate loading and trend plot.png", 6, 3, units = "in", res=300)
+
+ggpubr::ggarrange(plot.a, plot.b, ncol=2)
+
+dev.off()
 
 modelfit <- GOA.clim$best_model
 
@@ -336,23 +337,23 @@ GOA climate trends
 
 ```{r, echo=F}
 # trends
-plot.trend <- data.frame(year=1972:2017, trend=as.vector(rotated$trends_mean),
-                         lo=as.vector(rotated$trends_lower),
-                         hi=as.vector(rotated$trends_upper))
-
-plot.b <- ggplot(plot.trend, aes(year, trend)) +
-  theme_bw() +
-  geom_line(color=cb[3]) +
-  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
-  geom_hline(yintercept = 0) + ylab("Trend value") +
-  theme(axis.title.x = element_blank()) + 
-  ggtitle("b) Trend")
-
-png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
-
-ggpubr::ggarrange(plot.a, plot.b, ncol=2)
-
-dev.off()
+# plot.trend <- data.frame(year=1972:2017, trend=as.vector(rotated$trends_mean),
+#                          lo=as.vector(rotated$trends_lower),
+#                          hi=as.vector(rotated$trends_upper))
+# 
+# plot.b <- ggplot(plot.trend, aes(year, trend)) +
+#   theme_bw() +
+#   geom_line(color=cb[3]) +
+#   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
+#   geom_hline(yintercept = 0) + ylab("Trend value") +
+#   theme(axis.title.x = element_blank()) + 
+#   ggtitle("b) Trend")
+# 
+# png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
+# 
+# ggpubr::ggarrange(plot.a, plot.b, ncol=2)
+# 
+# dev.off()
 ```
 
 Find swans.
