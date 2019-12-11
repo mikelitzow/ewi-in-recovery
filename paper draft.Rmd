@@ -1127,7 +1127,7 @@ ichthyo.regimes <- data.frame(year=plot.trend$year, probability=kk$data$median, 
 ichthyo.regimes$data.set <- "Plankton 1981-2019"
 
 plot.regimes <- rbind(clim.regimes, biol.regimes, ichthyo.regimes)
-plot.regimes$jitter <- ifelse(plot.regimes$data.set=="Biology 1972-2019" & plot.regimes$probability>0.99, 1.002, plot.regimes$probability)
+plot.regimes$jitter <- ifelse(plot.regimes$data.set=="Biology 1972-2019" & plot.regimes$probability>0.99, 1.004, plot.regimes$probability)
 
 plot.regimes$order <- ifelse(plot.regimes$data.set=="Plankton 1981-2019", 1,
                              ifelse(plot.regimes$data.set=="Biology 1972-2019", 2, 3))
