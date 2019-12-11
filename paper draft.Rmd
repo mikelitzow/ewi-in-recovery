@@ -1142,7 +1142,7 @@ ggplot(plot.regimes, aes(year, jitter, color=data.set, fill=data.set)) +
   xlab("Year") + ylab("Probability") +
   theme(legend.title = element_blank(), legend.position = 'top') 
 
-ggsave("updated HMM regime plot.png", width = 6, height = 4, units='in)
+ggsave("updated HMM regime plot.png", width = 6, height = 4, units='in')
 ```
 
 Next step is to examine relationships between SST and the ichthyo trend.
