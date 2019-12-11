@@ -140,10 +140,11 @@ GOA <- ewidata
 drop <- grep("ICY.ZOOP.TOTDEN", GOA$code)
 GOA <- GOA[-drop,]
 
-# select ICY
-keep <- grep("ICY", GOA$code)
+# select ICY, PP, Seward, CPR, and ichthyo!
+keep <- c(grep("ICY", GOA$code), grep("PP_", GOA$code), grep("CPR", GOA$code), grep("SEWAR", GOA$code), grep("ICH", GOA$code))
 GOA <- GOA[keep,]
-GOA$value <- log(GOA$value)
+
+# GOA$value <- log(GOA$value)
 # # and drop ichthyoplankton
 # drop <- grep("ICH", GOA$code)
 # GOA <- GOA[-drop,]
@@ -181,13 +182,14 @@ ggplot(GOA, aes(value)) +
   geom_histogram(fill="grey", color="black", bins=10) + 
   facet_wrap(~code, scales="free")
 
-trns <- grep("amp", GOA$code)
+# log transform icy, seward, and bloom amplitude
+trns <- c(grep("amp", GOA$code), grep("ICY", GOA$code), grep("SEWA", GOA$code))
 GOA$value[trns] <- log(GOA$value[trns])
 
 sub_data = GOA
 
 # set the name for the model output!
-name <- "ICY_11.20.19.one.trend"
+name <- "all_plankton_11.20.19.one.trend"
 
 
 # and now run DFA!
