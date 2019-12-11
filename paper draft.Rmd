@@ -752,7 +752,7 @@ ggplot(plot.regimes, aes(year, probability, color=data.set)) +
 
 Next step is to examine relationships between SST and the GOA biology trend.
 
-We're interested in testing the hypothesis that the slope on sst was greater during 1972:1988 (high Aleutian Low variance) than during 1989:2013 (low Aleutian Low variance). Also interested in asking which of these periods the 2014-106 heat wave years are most similar to.
+We're interested in testing the hypothesis that the slope on sst was greater during 1972:1988 (high Aleutian Low variance) than during 1989:2013 (low Aleutian Low variance). Also interested in asking which of these periods the 2014-2016 heat wave years are most similar to.
 
 ```{r, include=F}
 # first, define the function
