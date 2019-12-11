@@ -611,6 +611,7 @@ sub_data <- goa.clim %>%
   filter(year >= 2005) %>%
   gather(key="code", value="value", -year)
 
+
 # ONE! trend model
 # with original data
 max_trends = 1
