@@ -336,23 +336,23 @@ GOA climate trends
 
 ```{r, echo=F}
 # trends
-plot.trend <- data.frame(year=1972:2017, trend=as.vector(rotated$trends_mean),
-                         lo=as.vector(rotated$trends_lower),
-                         hi=as.vector(rotated$trends_upper))
-
-plot.b <- ggplot(plot.trend, aes(year, trend)) +
-  theme_bw() +
-  geom_line(color=cb[3]) +
-  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
-  geom_hline(yintercept = 0) + ylab("Trend value") +
-  theme(axis.title.x = element_blank()) + 
-  ggtitle("b) Trend")
-
-png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
-
-ggpubr::ggarrange(plot.a, plot.b, ncol=2)
-
-dev.off()
+# plot.trend <- data.frame(year=1972:2017, trend=as.vector(rotated$trends_mean),
+#                          lo=as.vector(rotated$trends_lower),
+#                          hi=as.vector(rotated$trends_upper))
+# 
+# plot.b <- ggplot(plot.trend, aes(year, trend)) +
+#   theme_bw() +
+#   geom_line(color=cb[3]) +
+#   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
+#   geom_hline(yintercept = 0) + ylab("Trend value") +
+#   theme(axis.title.x = element_blank()) + 
+#   ggtitle("b) Trend")
+# 
+# png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
+# 
+# ggpubr::ggarrange(plot.a, plot.b, ncol=2)
+# 
+# dev.off()
 ```
 
 Find swans.
@@ -399,7 +399,7 @@ plot_regime_model(f1$best_model)
 
 kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(2))
 
-clim.regimes <- data.frame(year=1950:2019, probability=kk$data$median)
+clim.regimes <- data.frame(year=1950:2019, probability=kk$data$median, lwr=kk$data$lwr, upr=kk$data$upr)
 
 ggplot(clim.regimes, aes(year, probability)) +
   theme_bw() +
@@ -736,9 +736,9 @@ plot_regime_model(f1$best_model)
 
 kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(2))
 
-biol.regimes <- data.frame(year=1972:2017, probability=kk$data$median)
+biol.regimes <- data.frame(year=1972:2019, probability=kk$data$median, lwr=kk$data$lwr, upr=kk$data$upr)
 
-biol.regimes$data.set <- "Biology 1972-2017"
+biol.regimes$data.set <- "Biology 1972-2019"
 
 plot.regimes <- rbind(clim.regimes, biol.regimes)
 
@@ -997,7 +997,8 @@ ggsave("goa biology era sst slopes.png", width=5, height=4, units="in")
 One trend model was again the best.
 
 ```{r, echo=F}
-GOA.ich <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_ich_7.19.18.one.trend.rds") 
+# GOA.ich <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_ich_7.19.18.one.trend.rds") 
+GOA.ich <- readRDS("/Users/MikeLitzow/Documents/github/ewi-in-recovery/ewi-in-recovery/all_plankton_11.20.19.one.trend.rds") 
 GOA.ich$summary
 ```
 
@@ -1008,19 +1009,20 @@ GOA.ich$summary
 # reload the version of data used
 # load updated ewidata!
 # load updated ewidata!
-ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
-
-# limit to GOA
-GOA <- ewidata[ewidata$system %in% c("WGOA", "EGOA"),]
-unique(GOA$code)
-
-# limit to ichthy
-
-keep <- grep("ICH", GOA$code)
-
-GOA <- GOA[keep,]
+# ewidata <- as.tibble(read.csv("ewidata.csv", row.names=1))
+# 
+# # limit to GOA
+# GOA <- ewidata[ewidata$system %in% c("WGOA", "EGOA"),]
+# unique(GOA$code)
+# 
+# # limit to ichthy
+# 
+# keep <- grep("ICH", GOA$code)
+# 
+# GOA <- GOA[keep,]
 
 # recover the years and names for plots!
+# using GOA from 'updated plankton model.R'
 sub_data = GOA
 
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
@@ -1029,10 +1031,10 @@ names = Y$code
 Y = as.matrix(Y[,-which(names(Y) == "code")])
 
 rotated = rotate_trends(GOA.ich$best_model) 
-new.names <- c("sandlance", "ronquils", "walleye.pollock", "Pacific.cod", "flathead.sole", "n.rock.sole", "rockfish")
-
- check <- data.frame(names=names, newnames=new.names)
- check
+# new.names <- c("sandlance", "ronquils", "walleye.pollock", "Pacific.cod", "flathead.sole", "n.rock.sole", "rockfish")
+# 
+#  check <- data.frame(names=names, newnames=new.names)
+#  check
 
  # back to the bespoke code!
 loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
@@ -1110,7 +1112,7 @@ sd_y = apply(rotated$trends, c(2,3), sd)
 # code to identify (1) number of changes and (2)
 # where those change points occur.
 set.seed(11)
-f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 3)
+f1 = find_regimes(y = y[1,], sds = sd_y[1,], max_regimes = 5)
 
 
 print(f1$table) # this shows 2-regime model is best
@@ -1120,16 +1122,27 @@ plot_regime_model(f1$best_model)
 
 kk <- plot_regime_model(f1$best_model, plot_prob_indices=c(1))
 
-ichthyo.regimes <- data.frame(year=plot.trend$year, probability=kk$data$median)
+ichthyo.regimes <- data.frame(year=plot.trend$year, probability=kk$data$median, lwr=kk$data$lwr, upr=kk$data$upr)
 
-ichthyo.regimes$data.set <- "Ichthyoplankton 1980-2015"
+ichthyo.regimes$data.set <- "Plankton 1981-2019"
 
 plot.regimes <- rbind(clim.regimes, biol.regimes, ichthyo.regimes)
+plot.regimes$jitter <- ifelse(plot.regimes$data.set=="Biology 1972-2019" & plot.regimes$probability>0.99, 1.002, plot.regimes$probability)
 
-ggplot(plot.regimes, aes(year, probability, color=data.set)) +
+plot.regimes$order <- ifelse(plot.regimes$data.set=="Plankton 1981-2019", 1,
+                             ifelse(plot.regimes$data.set=="Biology 1972-2019", 2, 3))
+
+plot.regimes$data.set <- reorder(plot.regimes$data.set, plot.regimes$order)
+
+ggplot(plot.regimes, aes(year, jitter, color=data.set, fill=data.set)) +
   theme_bw() +
-  geom_line()
+  geom_line() +
+  geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=0.2, color=NA) +
+  scale_color_manual(values=cb[c(2,7,6)], guide=guide_legend(reverse=T)) + scale_fill_manual(values=cb[c(2,7,6)], guide=guide_legend(reverse=T)) +
+  xlab("Year") + ylab("Probability") +
+  theme(legend.title = element_blank(), legend.position = 'top') 
 
+ggsave("updated HMM regime plot.png", width = 6, height = 4, units='in)
 ```
 
 Next step is to examine relationships between SST and the ichthyo trend.
