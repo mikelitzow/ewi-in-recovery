@@ -104,6 +104,11 @@ plot.b <- ggplot(plot.trend, aes(year, trend)) +
   geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
   ggtitle("b) Trend")
 
+png("combined GOA climate loading and trend plot.png", 6, 3, units = "in", res=300)
+
+ggpubr::ggarrange(plot.a, plot.b, ncol=2)
+
+dev.off()
 
 # back to the bespoke code!
 loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
@@ -115,7 +120,7 @@ f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
   
 prop1 <- apply(loadings.1, 2, f)
 prop1
-keep <- prop1 > 0.90 # changing to 0.90 threshold!
+keep <- prop1 > 0.95
 
 loadings.1 <- loadings.1[,keep]
 
@@ -139,12 +144,6 @@ plot.a <- ggplot(plot.load, aes(key, value)) +
   coord_flip() +
   ggtitle("a) Loadings") +
   ylim(-2,2)
-
-png("combined GOA climate loading and trend plot.png", 6, 3, units = "in", res=300)
-
-ggpubr::ggarrange(plot.a, plot.b, ncol=2)
-
-dev.off()
 
 modelfit <- GOA.clim$best_model
 
@@ -337,23 +336,23 @@ GOA climate trends
 
 ```{r, echo=F}
 # trends
-# plot.trend <- data.frame(year=1972:2017, trend=as.vector(rotated$trends_mean),
-#                          lo=as.vector(rotated$trends_lower),
-#                          hi=as.vector(rotated$trends_upper))
-# 
-# plot.b <- ggplot(plot.trend, aes(year, trend)) +
-#   theme_bw() +
-#   geom_line(color=cb[3]) +
-#   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
-#   geom_hline(yintercept = 0) + ylab("Trend value") +
-#   theme(axis.title.x = element_blank()) + 
-#   ggtitle("b) Trend")
-# 
-# png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
-# 
-# ggpubr::ggarrange(plot.a, plot.b, ncol=2)
-# 
-# dev.off()
+plot.trend <- data.frame(year=1972:2017, trend=as.vector(rotated$trends_mean),
+                         lo=as.vector(rotated$trends_lower),
+                         hi=as.vector(rotated$trends_upper))
+
+plot.b <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[3]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") +
+  theme(axis.title.x = element_blank()) + 
+  ggtitle("b) Trend")
+
+png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
+
+ggpubr::ggarrange(plot.a, plot.b, ncol=2)
+
+dev.off()
 ```
 
 Find swans.
@@ -417,7 +416,7 @@ clim.regimes$data.set <- "Climate 1950-2019"
 One trend model was the best.
 
 ```{r, echo=F}
-GOA.biol <- readRDS("GOA_biol_9.9.19.rds") 
+GOA.biol <- readRDS("GOA_biol_11.4.19.rds") 
 GOA.biol$summary
 ```
 
@@ -453,7 +452,7 @@ f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
   
 prop1 <- apply(loadings.1, 2, f)
 prop1
-keep <- prop1 > 0.95
+keep <- prop1 > 0.9 # changed threshold to 0.9
 
 loadings.1 <- loadings.1[,keep]
 
@@ -471,17 +470,17 @@ cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E
 
 plot.a <- ggplot(plot.load, aes(key, value)) +
   theme_bw() +
-  geom_violin(fill=cb[3]) +
+  geom_violin(fill=cb[3], color=NA) +
   geom_hline(yintercept = 0) +
   theme(axis.title.y = element_blank()) + ylab("Loading") +
-  coord_flip() +
+  coord_flip() + ylim(-1.5, 1.5) +
   ggtitle("a) Loadings")
 ```
 
 
 ```{r, echo=F}
 # trends
-plot.trend <- data.frame(year=1972:2017, trend=as.vector(rotated$trends_mean),
+plot.trend <- data.frame(year=1972:2019, trend=as.vector(rotated$trends_mean),
                          lo=as.vector(rotated$trends_lower),
                          hi=as.vector(rotated$trends_upper))
 
@@ -490,10 +489,10 @@ plot.b <- ggplot(plot.trend, aes(year, trend)) +
   geom_line(color=cb[3]) +
   geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[3], alpha=0.4) +
   geom_hline(yintercept = 0) + ylab("Trend value") +
-  theme(axis.title.x = element_blank()) + 
+  xlab("Year") + 
   ggtitle("b) Trend")
 
-png("combined GOA climate loading and trend plot.png", 8, 4, units = "in", res=300)
+png("combined GOA biology loading and trend plot.png", 8, 4, units = "in", res=300)
 
 ggpubr::ggarrange(plot.a, plot.b, ncol=2)
 
@@ -759,7 +758,7 @@ We're interested in testing the hypothesis that the slope on sst was greater dur
 trend_lm <- function(rotated_modelfit,
   all_years, selected_years,
   climate_dat = NULL,
-  trend_number = 1, samples = 50,
+  trend_number = 1, samples = 500,
   ITER = 1000, CHAINS = 1, n_eff = 50, rhat = 1.1, show_plot = TRUE) {
 
   total_mcmc <- dim(rotated_modelfit$trends)[1]
@@ -820,7 +819,7 @@ cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(SST = arm::rescale(SST))
 
 cli_dat$slope <- 1
 cli_dat$slope[cli_dat$Year %in% 1989:2013] <- 2
-cli_dat$slope[cli_dat$Year %in% 2014:2017] <- 3
+cli_dat$slope[cli_dat$Year %in% 2014:2019] <- 3
 cli_dat$slope <- as.factor(cli_dat$slope)
 
 # rename rotated
@@ -837,7 +836,7 @@ set.seed(99)
 mod = trend_lm(rotated_modelfit = r, all_years = 1972:2017,
   selected_years = 1972:2017, climate_dat=cli_dat)
 
-names(mod)[2:4] <- c("1972-1988", "1989-2013", "2014-2017")
+names(mod)[2:4] <- c("1972-1988", "1989-2013", "2014-2019")
 summary(mod)
 
 # get 95% CIs
@@ -850,7 +849,7 @@ print(paste("LCI: ", x[(0.025*25000)]))
 print(paste("UCI: ", x[(0.975*25000)]))
 }
 
-melt.mod <- melt(mod, measure.vars=c("1972-1988", "1989-2013", "2014-2017"))
+melt.mod <- melt(mod, measure.vars=c("1972-1988", "1989-2013", "2014-2019"))
 names(melt.mod)[3] <- "era"
 melt.mod$covar <- "SST"
 
@@ -859,57 +858,57 @@ melt.mod$covar <- "SST"
 Now the PDO.
 
 ```{r, echo=F}
-
-pdo <- read.csv("pdo.csv")
-
-win.pdo <- pdo$NDJFM
-
-years <- as.numeric(colnames(GOA.biol$best_model$data)) # these are the years for the biology model - 1972:2017
-
-# set up climate data
-cli_dat <- data.frame(Year=pdo$YEAR, PDO=win.pdo)
-
-cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(PDO = arm::rescale(PDO))
-
-# cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
-
-cli_dat$slope <- 1
-cli_dat$slope[cli_dat$Year %in% 1989:2013] <- 2
-cli_dat$slope[cli_dat$Year %in% 2014:2017] <- 3
-cli_dat$slope <- as.factor(cli_dat$slope)
-
-# rename rotated
-r <- rotated
-
-Y = rnorm(length(cli_dat$slope))
-cli_dat = as.data.frame(model.matrix(Y ~ Year + PDO:slope, data=cli_dat))
-# replace ':' in name for formula
-names(cli_dat) = gsub(":","",names(cli_dat))
-# remove named intercept
-cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
-
-set.seed(99)
-mod2 = trend_lm(rotated_modelfit = r, all_years = 1972:2017,
-  selected_years = 1972:2016, climate_dat=cli_dat)
-
-names(mod2)[2:4] <- c("1972-1988", "1989-2013", "2014-2017")
-
-summary(mod2)
-
-# get 95% CIs
-
-for(i in 2:4){
-x <- sort(mod2[,i])
-print(names(mod2)[i])
-print(paste("median: ", median(x)))
-print(paste("LCI: ", x[(0.025*25000)]))
-print(paste("UCI: ", x[(0.975*25000)]))
-}
-
-
-melt.mod2 <- melt(mod2, measure.vars=c("1972-1988", "1989-2013", "2014-2017"))
-names(melt.mod2)[3] <- "era"
-melt.mod2$covar <- "PDO"
+# 
+# pdo <- read.csv("pdo.csv")
+# 
+# win.pdo <- pdo$NDJFM
+# 
+# years <- as.numeric(colnames(GOA.biol$best_model$data)) # these are the years for the biology model - 1972:2017
+# 
+# # set up climate data
+# cli_dat <- data.frame(Year=pdo$YEAR, PDO=win.pdo)
+# 
+# cli_dat <- filter(cli_dat, Year %in% years) %>% mutate(PDO = arm::rescale(PDO))
+# 
+# # cli_dat$regime = as.factor(sample(c(0,1,2), size=20, replace=T))
+# 
+# cli_dat$slope <- 1
+# cli_dat$slope[cli_dat$Year %in% 1989:2013] <- 2
+# cli_dat$slope[cli_dat$Year %in% 2014:2017] <- 3
+# cli_dat$slope <- as.factor(cli_dat$slope)
+# 
+# # rename rotated
+# r <- rotated
+# 
+# Y = rnorm(length(cli_dat$slope))
+# cli_dat = as.data.frame(model.matrix(Y ~ Year + PDO:slope, data=cli_dat))
+# # replace ':' in name for formula
+# names(cli_dat) = gsub(":","",names(cli_dat))
+# # remove named intercept
+# cli_dat = cli_dat[,-which(names(cli_dat)=="(Intercept)")]
+# 
+# set.seed(99)
+# mod2 = trend_lm(rotated_modelfit = r, all_years = 1972:2017,
+#   selected_years = 1972:2016, climate_dat=cli_dat)
+# 
+# names(mod2)[2:4] <- c("1972-1988", "1989-2013", "2014-2017")
+# 
+# summary(mod2)
+# 
+# # get 95% CIs
+# 
+# for(i in 2:4){
+# x <- sort(mod2[,i])
+# print(names(mod2)[i])
+# print(paste("median: ", median(x)))
+# print(paste("LCI: ", x[(0.025*25000)]))
+# print(paste("UCI: ", x[(0.975*25000)]))
+# }
+# 
+# 
+# melt.mod2 <- melt(mod2, measure.vars=c("1972-1988", "1989-2013", "2014-2017"))
+# names(melt.mod2)[3] <- "era"
+# melt.mod2$covar <- "PDO"
 
 
 ```
@@ -986,7 +985,7 @@ ggplot(melt.mod, aes(x=value, fill=era)) +
   geom_vline(xintercept = 0, lty=2) +
   scale_fill_manual(values = cb[c(4, 6, 2)]) +
   theme(legend.title = element_blank(), legend.position = c(0.8, 0.8)) +
-  xlab("Slope") +
+  xlab("Slope") + ylab("Density") +
   xlim(-5,12)
 
 ggsave("goa biology era sst slopes.png", width=5, height=4, units="in")
