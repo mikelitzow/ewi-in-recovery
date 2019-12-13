@@ -34,8 +34,8 @@ Y <- as.matrix(Y[, -which(names(Y) == "code")])
 
 # set new names
 new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient",
-  "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST",
-  "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
+               "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST",
+               "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
 
 # look at rolling correlations between fitted and observed values, as in Ecology paper
 # using 25-yr rolling windows!
@@ -53,9 +53,9 @@ fit_cor_stan <- function(.x) {
   ))
   stan_dat <- list(x = cbind(.x$trend_value, .x$data_value), N = nrow(.x))
   m <- sampling(stan_correlation_m,
-    data = stan_dat,
-    iter = 500, chains = 1, verbose = FALSE, refresh = 0,
-    seed = 1947823,
+                data = stan_dat,
+                iter = 500, chains = 1, verbose = FALSE, refresh = 0,
+                seed = 1947823,
   )
   rho_post <- rstan::extract(m)$rho
   tibble(
@@ -78,7 +78,7 @@ orig_data <- reshape2::melt(modelfit$data) %>%
   as_tibble() %>%
   rename(variable = Var1, year = Var2, data_value = value)
 orig_and_pred <- inner_join(pred_long, orig_data,
-  by = c("year", "variable")
+                            by = c("year", "variable")
 ) %>%
   filter(!is.na(data_value))
 
@@ -120,23 +120,23 @@ out %>%
     upr2 = quantile(rho_post, probs = 0.75),
     med = quantile(rho_post, probs = 0.5)
   ) %>%
-  # filter(!(middle < 1970 & var_name == "GAK1 salinity")) %>%
+  filter(!(middle < 1970 & var_name == "GAK1 salinity")) %>% # renoving data-poor GAK1 windows
   ggplot(aes(x = middle, y = med, ymin = lwr, ymax = upr)) +
-  geom_hline(yintercept = 0, lty = 2, alpha = 0.2) +
+  # geom_hline(yintercept = 0, lty = 2, alpha = 0.2) +
   geom_line(colour = "#56B4E9", lwd = .7) +
   geom_ribbon(
     alpha = 0.4, fill = "#56B4E9",
     mapping = aes(ymin = lwr2, ymax = upr2)
   ) +
   geom_ribbon(alpha = 0.25, fill = "#56B4E9") +
-  facet_wrap(~var_name, scales = "fixed", ncol = 3) +
+  facet_wrap(~var_name, scales = "free_y", ncol = 3) +
   theme_bw() +
   ylab("Correlation") +
-  xlab("Year (middle of 25-year window)") +
-  theme(axis.title.x = element_blank()) +
-  coord_cartesian(ylim = c(-0.25, 1), expand = FALSE)
+  xlab("Year (middle of 25-year window)")# +
+  # theme(axis.title.x = element_blank()) +
+  # coord_cartesian(ylim = c(-0.25, 1), expand = FALSE)
 dir.create("figs", showWarnings = FALSE)
-ggsave("figs/stan-cor-window-env.png", width = 5.5, height = 5.5)
+ggsave("figs/stan-cor-window-env.png", width = 6, height = 5.5)
 
 # and now the same for biology ------------------------
 # load in the model
@@ -180,7 +180,7 @@ orig_data <- reshape2::melt(modelfit$data) %>%
   as_tibble() %>%
   rename(variable = Var1, year = Var2, data_value = value)
 orig_and_pred <- inner_join(pred_long, orig_data,
-  by = c("year", "variable")
+                            by = c("year", "variable")
 ) %>%
   filter(!is.na(data_value))
 
@@ -222,8 +222,8 @@ out2 %>%
   facet_wrap(~var_name, scales = "fixed", ncol = 4) +
   theme_bw() +
   ylab("Correlation") +
-  xlab("Year (middle of 25-year window)") +
-  theme(axis.title.x = element_blank()) +
-  scale_x_continuous(breaks = seq(1990, 2010, 10)) +
-  coord_cartesian(ylim = c(-0.35, 1), expand = FALSE)
+  xlab("Year (middle of 25-year window)") # +
+  # theme(axis.title.x = element_blank()) +
+  # scale_x_continuous(breaks = seq(1985, 2005, 10)) +
+  # coord_cartesian(ylim = c(-0.35, 1), expand = FALSE)
 ggsave("figs/stan-cor-window-biol.png", width = 6.25, height = 6.25)
