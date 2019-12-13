@@ -998,7 +998,7 @@ One trend model was again the best.
 
 ```{r, echo=F}
 # GOA.ich <- readRDS("/Users/MikeLitzow/Documents/R/Fate/fate-ewi/GOA_ich_7.19.18.one.trend.rds") 
-GOA.ich <- readRDS("/Users/MikeLitzow/Documents/github/ewi-in-recovery/ewi-in-recovery/all_plankton_11.20.19.one.trend.rds") 
+GOA.ich <- readRDS("all_plankton_12.11.19.one.trend.rds") 
 GOA.ich$summary
 ```
 
@@ -1763,7 +1763,7 @@ dev.off()
 Or, much better! I ran a single model for the entire plankton TS and this appears to work...
 
 ```{r, echo=F}
-all <- readRDS("all_plankton_11.20.19.one.trend.rds") 
+all <- readRDS("all_plankton_12.11.19.one.trend.rds") 
 all$summary
 ```
 
@@ -1823,7 +1823,7 @@ export <- export %>%
 write.csv(export, "plankton loadings.csv", row.names = F)
 
 
-keep <- prop1 > 0.95
+keep <- prop1 > 0.90 # changing to 0.9!
 
 loadings.1 <- loadings.1[,keep]
 
@@ -1848,7 +1848,7 @@ plot.a <- ggplot(plot.load, aes(key, value)) +
   coord_flip() +
   ggtitle("a) Plankton loadings") +
   theme(title = element_text(size=8)) +
-  ylim(-2.5,2.5)
+  ylim(-2,2)
 
 plot.a
 ```
@@ -1931,7 +1931,8 @@ plot.c <- ggplot(mod, aes(x=SST)) +
   xlab("Slope") + 
   ylab("Density") +
   ggtitle(("c) Plankton slope on SST")) +
-  theme(title = element_text(size=8))
+  theme(title = element_text(size=8)) +
+  xlim(-3.2,0.5)
 
 plot.c
 ```
@@ -1939,10 +1940,11 @@ plot.c
 And combine into a single plot.
 
 ```{r}
-png("combined all plankton time series plots.png", 8, 2.5, units="in", res=300)
+png("combined all plankton time series plots.png", 10, 4, units="in", res=300)
 
 ggpubr::ggarrange(plot.a, plot.b, plot.c,
-          ncol=3, widths=c(1, 1, 0.8), nrow=1)
+          ncol=3, widths=c(1, 1.3, 0.8), nrow=1)
+
 
 dev.off()
 ```
