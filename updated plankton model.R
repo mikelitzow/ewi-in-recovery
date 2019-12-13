@@ -11,8 +11,8 @@ library(gtools)
 library(bayesdfa)
 
 # load updated ewidata!
-ewidata <- read.csv("ewidata.csv", row.names=1)
-
+# ewidata <- read.csv("ewidata.csv", row.names=1)
+#
 # now load sewardline updates
 
 sew <- read.csv("sewardline.updates.csv")
@@ -63,7 +63,7 @@ ggplot(pp, aes(value)) +
   geom_histogram(bins=8) +
   facet_wrap(~code, scales="free")
 
-# I think we can live with that distribution 
+# I think we can live with that distribution
 # - although I should ask Eric/Sean if the bimodal distribution in duration is a problem for the DFA models
 
 pp$code <- paste("PP_", pp$code, sep="")
@@ -72,7 +72,7 @@ pp$system <- "EGOA"
 pp$subtype <- NA
 
 ewidata <- rbind(ewidata, pp)
-# 
+#
 # # now updated CPR data
 
 cpr <- read.csv("CPR.2019.csv")
@@ -125,12 +125,12 @@ cor(check[,4:9])
 
 # combine with ewidata
 ewidata <- rbind(ewidata, icy)
-
-# and save
-write.csv(ewidata, "/Users/MikeLitzow/Documents/R/FATE/ewidata/inst/extdata/ewidata_11.20.19", row.names = F)
+#
+# # and save
+# write.csv(ewidata, "/Users/MikeLitzow/Documents/R/FATE/ewidata/inst/extdata/ewidata_11.20.19", row.names = F)
 write.csv(ewidata, "ewidata.plankton.updated.csv", row.names=F)
 
-
+ewidata <- read.csv("ewidata_11.20.19.csv")
 # GoA biology
 
 codes <- unique(ewidata$code)
@@ -148,38 +148,38 @@ GOA <- GOA[keep,]
 # # and drop ichthyoplankton
 # drop <- grep("ICH", GOA$code)
 # GOA <- GOA[-drop,]
-# 
-# # # and try dropping PP duration, as this is bimodal and might give trouble with the model 
+#
+# # # and try dropping PP duration, as this is bimodal and might give trouble with the model
 # # # returning bimodal loadings
 # # drop <- grep("_dur", GOA$code)
 # # GOA <- GOA[-drop,]
-# 
+#
 # unique(GOA$code)
-# 
+#
 # # now check for outliers!
-# ggplot(GOA, aes(x=year, y = value))  + 
-#   theme_bw() + 
+# ggplot(GOA, aes(x=year, y = value))  +
+#   theme_bw() +
 #   geom_line() +
 #   facet_wrap(~code, scales = "free_y")  + xlab("Year") +
 #   ylab("Value")
-# 
-# ggplot(GOA, aes(value))  + 
-#   theme_bw() + 
+#
+# ggplot(GOA, aes(value))  +
+#   theme_bw() +
 #   geom_histogram(fill="grey", color="black") +
-#   facet_wrap(~code, scales = "free")  
-# 
+#   facet_wrap(~code, scales = "free")
+#
 # # log transform ICY and Seward
 # trns <- c(grep("ICY", GOA$code), grep("SEWARD", GOA$code))
 # GOA$value[trns] <- log(GOA$value[trns])
-# 
+#
 # # not fitting well - tyr separate models for each?
 # keep <- c(grep("PP", GOA$code), grep("CPR", GOA$code))
 # GOA <- GOA[keep,]
 
 # and check distributions
-ggplot(GOA, aes(value)) + 
-  theme_bw() + 
-  geom_histogram(fill="grey", color="black", bins=10) + 
+ggplot(GOA, aes(value)) +
+  theme_bw() +
+  geom_histogram(fill="grey", color="black", bins=10) +
   facet_wrap(~code, scales="free")
 
 # log transform icy, seward, and bloom amplitude
@@ -189,8 +189,7 @@ GOA$value[trns] <- log(GOA$value[trns])
 sub_data = GOA
 
 # set the name for the model output!
-name <- "all_plankton_11.20.19.one.trend"
-
+name <- "all_plankton_12.11.19.one.trend"
 
 # and now run DFA!
 mcmc_iter = 4000
@@ -234,7 +233,7 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
