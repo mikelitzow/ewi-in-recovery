@@ -10,7 +10,7 @@ dat <- read.csv("ewidata.csv", row.names = 1)
 
 levels(dat$system)
 
-# restrict to GOA 
+# restrict to GOA
 
 goa.dat <- dat %>%
   filter(system %in% c("EGOA", "WGOA"))
@@ -19,7 +19,7 @@ ggplot(goa.dat, aes(year, value)) +
   theme_bw() +
   geom_line() +
   geom_point() +
-  facet_wrap(~code, scales="free_y") 
+  facet_wrap(~code, scales="free_y")
 
 # extend SST data
 # load ERSSTv5 data for the N. Pacific
@@ -54,14 +54,14 @@ f2 <- function(x) tapply(x, m, sd)
 SST <- ncvar_get(nc,  "sst")
 # Change data from a 3-D array to a matrix of monthly data by grid point:
 # First, reverse order of dimensions ("transpose" array)
-SST <- aperm(SST, 3:1)  
+SST <- aperm(SST, 3:1)
 
 # Change to matrix with column for each grid point, rows for monthly means
-SST <- matrix(SST, nrow=dim(SST)[1], ncol=prod(dim(SST)[2:3]))  
+SST <- matrix(SST, nrow=dim(SST)[1], ncol=prod(dim(SST)[2:3]))
 
 # Keep track of corresponding latitudes and longitudes of each column:
-sst.lat <- rep(sst.y, length(sst.x))   
-sst.lon <- rep(sst.x, each = length(sst.y))   
+sst.lat <- rep(sst.y, length(sst.x))
+sst.lon <- rep(sst.x, each = length(sst.y))
 dimnames(SST) <- list(as.character(sst.d), paste("N", sst.lat, "E", sst.lon, sep=""))
 
 ##############################################################################
@@ -83,14 +83,14 @@ SST[,blank] <- NA
 SST.mean <- colMeans(SST)
 z <- t(matrix(SST.mean,length(sst.y)))  # Re-shape to a matrix with latitudes in columns, longitudes in rows
 image(sst.x,sst.y,z, col=tim.colors(64), xlim=c(160,240), ylim=c(40,66))
-contour(sst.x, sst.y, z, add=T)  
+contour(sst.x, sst.y, z, add=T)
 map('world2Hires',fill=F,xlim=c(130,250), ylim=c(20,66),add=T, lwd=2)
 
 # looks good!
 
-# now remove seasonal signal and scale 
+# now remove seasonal signal and scale
 mu <- apply(SST, 2, f1)	# Compute monthly means for each time series (location)
-mu <- mu[rep(1:12, floor(length(sst.d)/12)),]  # Replicate means matrix for each year at each location 
+mu <- mu[rep(1:12, floor(length(sst.d)/12)),]  # Replicate means matrix for each year at each location
 
 #now need to account for trailing months (i.e., fractions of a year that are available with updated data)
 add <- length(sst.d)-12*floor(length(sst.d)/12)
@@ -102,7 +102,7 @@ identical(nrow(mu), nrow(SST)) #true!
 
 std <- apply(SST, 2, f2)	# Compute monthly sd for each time series (location)
 # and stack as for mu
-std <- std[rep(1:12, floor(length(sst.d)/12)),] 
+std <- std[rep(1:12, floor(length(sst.d)/12)),]
 # add in additional required months
 std <- rbind(std, std[1:add,])
 
@@ -152,24 +152,24 @@ plot(names(wgoa.spr), wgoa.spr, type="b")
 SST <- ncvar_get(nc,  "sst")
 # Change data from a 3-D array to a matrix of monthly data by grid point:
 # First, reverse order of dimensions ("transpose" array)
-SST <- aperm(SST, 3:1)  
+SST <- aperm(SST, 3:1)
 
 # Change to matrix with column for each grid point, rows for monthly means
-SST <- matrix(SST, nrow=dim(SST)[1], ncol=prod(dim(SST)[2:3]))  
+SST <- matrix(SST, nrow=dim(SST)[1], ncol=prod(dim(SST)[2:3]))
 sst.x <- ncvar_get(nc, "longitude")
 sst.y <- ncvar_get(nc, "latitude")
 
 SST <- ncvar_get(nc,  "sst")
 # Change data from a 3-D array to a matrix of monthly data by grid point:
 # First, reverse order of dimensions ("transpose" array)
-SST <- aperm(SST, 3:1)  
+SST <- aperm(SST, 3:1)
 
 # Change to matrix with column for each grid point, rows for monthly means
-SST <- matrix(SST, nrow=dim(SST)[1], ncol=prod(dim(SST)[2:3]))  
+SST <- matrix(SST, nrow=dim(SST)[1], ncol=prod(dim(SST)[2:3]))
 
 # Keep track of corresponding latitudes and longitudes of each column:
-sst.lat <- rep(sst.y, length(sst.x))   
-sst.lon <- rep(sst.x, each = length(sst.y))   
+sst.lat <- rep(sst.y, length(sst.x))
+sst.lon <- rep(sst.x, each = length(sst.y))
 dimnames(SST) <- list(as.character(sst.d), paste("N", sst.lat, "E", sst.lon, sep=""))
 
 # 52-60N and 218-232E
@@ -188,13 +188,13 @@ SST[,blank] <- NA
 SST.mean <- colMeans(SST)
 z <- t(matrix(SST.mean,length(sst.y)))  # Re-shape to a matrix with latitudes in columns, longitudes in rows
 image(sst.x,sst.y,z, col=tim.colors(64), xlim=c(160,240), ylim=c(40,66))
-contour(sst.x, sst.y, z, add=T)  
+contour(sst.x, sst.y, z, add=T)
 map('world2Hires',fill=F,xlim=c(130,250), ylim=c(20,66),add=T, lwd=2)
 # looks good!
 
-# now remove seasonal signal and scale 
+# now remove seasonal signal and scale
 mu <- apply(SST, 2, f1)	# Compute monthly means for each time series (location)
-mu <- mu[rep(1:12, floor(length(sst.d)/12)),]  # Replicate means matrix for each year at each location 
+mu <- mu[rep(1:12, floor(length(sst.d)/12)),]  # Replicate means matrix for each year at each location
 
 #now need to account for trailing months (i.e., fractions of a year that are available with updated data)
 add <- length(sst.d)-12*floor(length(sst.d)/12)
@@ -206,7 +206,7 @@ identical(nrow(mu), nrow(SST)) #true!
 
 std <- apply(SST, 2, f2)	# Compute monthly sd for each time series (location)
 # and stack as for mu
-std <- std[rep(1:12, floor(length(sst.d)/12)),] 
+std <- std[rep(1:12, floor(length(sst.d)/12)),]
 # add in additional required months
 std <- rbind(std, std[1:add,])
 
@@ -237,7 +237,7 @@ egoa.spr <- tapply(SST.mean, spr.yrs, mean)
 
 # collect new sst values
 head(dat)
-new.sst <- data.frame(year=rep(1950:2019, 4), 
+new.sst <- data.frame(year=rep(1950:2019, 4),
                       code=rep(c("AKCLIM_egoa.spr.sst", "AKCLIM_egoa.win.sst", "AKCLIM_wgoa.spr.sst", "AKCLIM_wgoa.win.sst"), each=length(1950:2019)),
                       value=c(egoa.spr[names(egoa.spr) %in% 1950:2019], egoa.win[names(egoa.win) %in% 1950:2019], wgoa.spr[names(wgoa.spr) %in% 1950:2019], wgoa.win[names(wgoa.win) %in% 1950:2019]),
                       system=rep(c("EGOA", "WGOA"), each=length(1950:2019)), subtype=NA)
@@ -254,7 +254,7 @@ ggplot(goa.dat, aes(year, value)) +
   theme_bw() +
   geom_line() +
   geom_point() +
-  facet_wrap(~code, scales="free_y") 
+  facet_wrap(~code, scales="free_y")
 
 # load covariates from AK salmon analysis
 covar.dat <- read.csv("salmon.covariates.csv")
@@ -298,7 +298,7 @@ goa.clim <- read.csv("long-term goa ssh stress slp gradient.csv")
 goa.clim <- cbind(goa.clim, sum.uw)
 
 keep <- grep("sst", goa.dat$code)
-temp <- goa.dat[keep,] 
+temp <- goa.dat[keep,]
 temp <- tapply(temp$value, list(temp$year, temp$code), identity)
 drop <- is.na(colMeans(temp))
 temp <- temp[,!drop]
@@ -309,7 +309,7 @@ names(goa.clim)[10:13] <- c("egoa.spr.sst", "egoa.win.sst", "wgoa.spr.sst", "wgo
 temp <- goa.dat %>%
   filter(code=="AKCLIM_GOA_PAPA")
 
-goa.clim$papa.index <- c(temp$value, papa$papa[3:5])  
+goa.clim$papa.index <- c(temp$value, papa$papa[3:5])
 
 plot.clim <- goa.clim %>%
   gather(key="code", value="value", -year)
@@ -339,13 +339,13 @@ library(gtools)
 library(bayesdfa)
 
 mcmc_iter = 4000
-max_trends = 3 
+max_trends = 3
 mcmc_chains = 3
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-# doing this in a clunky way - 
-# find dfa trends with 2 or 3 candidate trends 
+# doing this in a clunky way -
+# find dfa trends with 2 or 3 candidate trends
 # and original data (as in previous iteration of paper)
 # or expanded data (adding SSH and wind stress)
 goa.clim <- read.csv("updated goa climate data.csv")
@@ -390,14 +390,14 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 # now two trends with expanded data
 max_trends = 2
@@ -437,14 +437,14 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 ## ############################
 # now the original data set
@@ -491,14 +491,14 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 
 ######################
@@ -540,27 +540,27 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 ######################
 # one-trend models fit separately to first 15 and last 15 years of the TS
 sub_data <- goa.clim %>%
-  select(-ssh, -wind.stress, -salinity.20m) %>%
-  filter(year <= 1964) %>%
+  select(-ssh, -wind.stress) %>%
+  filter(year %in% 1972:1986) %>%
   gather(key="code", value="value", -year)
 
 # ONE! trend model
 # with original data
 max_trends = 1
-name <- "GOA_clim_1_trend_original_data_1950_1964"
-
+# name <- "GOA_clim_1_trend_original_data_1950_1964"
+name <- "GOA_clim_1_trend_original_data_1972_1986"
 # reshape data
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
 Y <- dcast(melted, code ~ year)
@@ -595,19 +595,19 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 
 # last 15
 sub_data <- goa.clim %>%
-  select(-ssh, -wind.stress, -salinity.20m) %>%
+  select(-ssh, -wind.stress) %>%
   filter(year >= 2005) %>%
   gather(key="code", value="value", -year)
 
@@ -651,14 +651,14 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 ########################################################
 # make an era-specific plot of loadings!
@@ -669,13 +669,13 @@ cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E
 # join posteriors for loadings in the two eras
 # load the first 15 year results
 # load the 1-trend object
-GOA.clim.era1 <- readRDS("GOA_clim_1_trend_original_data_1950_1964.rds") # read in GOA climate model
+GOA.clim.era1 <- readRDS("GOA_clim_1_trend_original_data_1972_1986.rds") # read in GOA climate model
 
 # recover the years and names for plots!
 goa.clim <- read.csv("updated goa climate data.csv")
 
 sub_data <- goa.clim %>%
-  select(-ssh, -wind.stress, -salinity.20m) %>%
+  select(-ssh, -wind.stress) %>%
   gather(key="code", value="value", -year)
 
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
@@ -683,19 +683,20 @@ Y <- dcast(melted, code ~ year)
 names = Y$code
 Y = as.matrix(Y[,-which(names(Y) == "code")])
 
-rotated = rotate_trends(GOA.clim.era1$best_model) 
+rotated.1 = rotate_trends(GOA.clim.era1$best_model)
 
 # set new names
-new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
+new.names <- c("East spring SST", "East winter SST", "SLP gradient", "Papa advection",
+               "GAK1 salinity", "West spring SST", "West winter SST", "Downwell 54 134", "Downwell 57 137", "Downwell 60 146", "Downwell 60 149")
 
 # back to the bespoke code!
-loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+loadings.1 <- as.data.frame(rotated.1$Z_rot[,,1])
 names(loadings.1)  <- new.names
 
 # now....era2
 GOA.clim.era2 <- readRDS("GOA_clim_1_trend_original_data_2005_2019.rds") # read in GOA climate model
-rotated = rotate_trends(GOA.clim.era2$best_model) 
-loadings.2 <- as.data.frame(rotated$Z_rot[,,1])
+rotated.2 = rotate_trends(GOA.clim.era2$best_model)
+loadings.2 <- as.data.frame(rotated.2$Z_rot[,,1])
 names(loadings.2)  <- new.names
 
 loadings.1$era <- "1950-1964"
@@ -706,17 +707,54 @@ loadings.2$era <- "2005-2019"
 plot.load <- rbind(loadings.1, loadings.2) %>%
   gather(key, value, -era)
 
-# rank <- tapply(plot.load$value, plot.load$key, mean)
-# plot.load$rank <- rank[match(plot.load$key, names(rank))]
-# 
-# plot.load$key <- reorder(plot.load$key, plot.load$rank)
+
+rank <- tapply(plot.load$value, plot.load$key, mean, na.rm=T)
+plot.load$rank <- rank[match(plot.load$key, names(rank))]
+plot.load$key <- reorder(plot.load$key, -plot.load$rank)
 
 # set pallette
 cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-ggplot(plot.load, aes(value, fill=era)) + 
-  geom_density(alpha=0.5) +
-  scale_fill_manual(values=cb[c(6,8)]) +
+plot.a <- ggplot(plot.load, aes(key, value, fill=era)) +
+  geom_violin(color=NA) +
+  scale_fill_manual(values=cb[c(2,4)]) +
   theme_bw() +
-  facet_wrap(~key, scales = "free_y") +
-  xlim(-1.5, 2.5) + geom_vline(xintercept = 0, lty=2)
+  ylim(-2, 2) + geom_hline(yintercept = 0, lty=2) +
+  theme(legend.title = element_blank(), axis.title.y = element_blank(), legend.position = 'top',
+        title = element_text(size=9)) +
+  coord_flip() + ylab("Loading") + ggtitle("a) Era-specific loadings")
+
+plot.trend <- data.frame(year=1972:1986, trend=as.vector(rotated.1$trends_mean),
+                         lo=as.vector(rotated.1$trends_lower),
+                         hi=as.vector(rotated.1$trends_upper))
+
+plot.b <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[2]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[2], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
+  ggtitle("b) Trend 1972-1986") +
+  theme(title = element_text(size=8))
+
+plot.trend <- data.frame(year=2005:2019, trend=as.vector(rotated.2$trends_mean),
+                         lo=as.vector(rotated.2$trends_lower),
+                         hi=as.vector(rotated.2$trends_upper))
+
+plot.c <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[4]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[4], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
+  ggtitle("c) Trend 2005-2019") +
+  theme(title = element_text(size=8))
+
+plot.null <- ggplot() + theme_void()
+
+png("era-specific climate dfa.png", 6,6, units="in", res=300)
+
+ggpubr::ggarrange(plot.a,
+                  ggpubr::ggarrange(plot.null, plot.b, plot.c, ncol=1, nrow=3, heights = c(0.2,1,1)),
+                  ncol=2, widths=c(1,0.8))
+
+dev.off()
+
