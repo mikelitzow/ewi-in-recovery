@@ -849,6 +849,15 @@ print(paste("LCI: ", x[(0.025*25000)]))
 print(paste("UCI: ", x[(0.975*25000)]))
 }
 
+# and look at the proportion of posteriors > or < 0 for each era
+for(i in 2:4){
+x <- mod[,i]
+print(names(mod)[i])
+print(paste("Proportion < 0: ", sum(x < 0)/length(x)))
+print(paste("Proportion > 0: ", sum(x > 0)/length(x)))
+}
+
+
 melt.mod <- melt(mod, measure.vars=c("1972-1988", "1989-2013", "2014-2019"))
 names(melt.mod)[3] <- "era"
 melt.mod$covar <- "SST"
@@ -1763,7 +1772,8 @@ dev.off()
 Or, much better! I ran a single model for the entire plankton TS and this appears to work...
 
 ```{r, echo=F}
-all <- readRDS("all_plankton_12.11.19.one.trend.rds") 
+# all <- readRDS("all_plankton_12.11.19.one.trend.rds") 
+all <- readRDS("GOA_plankton_11.18.19.one.trends.rds") 
 all$summary
 ```
 
@@ -1922,6 +1932,14 @@ print(names(mod)[2])
 print(paste("median: ", median(x)))
 print(paste("LCI: ", x[(0.025*25000)]))
 print(paste("UCI: ", x[(0.975*25000)]))
+
+# and look at the proportion of posteriors > or < 0 
+
+x <- mod[,2]
+print(names(mod)[i])
+print(paste("Proportion < 0: ", sum(x < 0)/length(x)))
+print(paste("Proportion > 0: ", sum(x > 0)/length(x)))
+
 
 plot.c <- ggplot(mod, aes(x=SST)) +
   theme_bw() +

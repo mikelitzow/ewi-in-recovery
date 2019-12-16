@@ -30,7 +30,7 @@ drop <- grep("DOGF", GOA$code)
 GOA <- GOA[-drop,]
 
 # drop birds and icy strait and chatnam and seward line and CPR
-drop <- c(grep("PROD.", GOA$code), grep("PHEN.", GOA$code), grep("ICY", GOA$code), grep("CHAT", GOA$code), grep("SEWARD", GOA$code), 
+drop <- c(grep("PROD.", GOA$code), grep("PHEN.", GOA$code), grep("ICY", GOA$code), grep("CHAT", GOA$code), grep("SEWARD", GOA$code),
           grep("mesozoo", GOA$code), grep("diatoms", GOA$code), grep("copepod", GOA$code))
 GOA <- GOA[-drop,]
 
@@ -55,7 +55,7 @@ ggplot(GOA, aes(year, value)) +
   theme_bw() +
   geom_line() +
   geom_point() +
-  facet_wrap(~code, scales="free_y") 
+  facet_wrap(~code, scales="free_y")
 
 # update with latest salmon values
 update <- read.csv("salmon catch updates.csv")
@@ -214,7 +214,7 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
@@ -229,7 +229,7 @@ dev.off()
 # one-trend models fit separately to first 15 and last 15 years of the TS
 sub_data <- GOA %>%
   select(year, code, value) %>%
-  filter(year <= 1986) 
+  filter(year <= 1986)
 
 # ONE! trend model
 # with original data
@@ -270,20 +270,20 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 
 # last 15
 sub_data <- GOA %>%
   select(year, code, value) %>%
-  filter(year >= 2003) 
+  filter(year >= 2003)
 
 # ONE! trend model
 # with original data
@@ -324,14 +324,14 @@ if(ncol(rotated$Z_rot_mean)==2) {
   lines(c(0,0), c(-10,10))
 }
 # predicted values with data
-print(plot_fitted(dfa_summary$best_model,names=names) + 
+print(plot_fitted(dfa_summary$best_model,names=names) +
         theme(strip.text.x = element_text(size = 6)))
 
 # table of AIC and std errors
 summary_table<-dfa_summary$summary
 capture.output(summary_table, file = paste0(name, "_summary.txt"))
 
-dev.off() 
+dev.off()
 
 ########################################################
 # make an era-specific plot of loadings!
@@ -347,20 +347,21 @@ GOA.biol.era1 <- readRDS("GOA_biol_1_trend_1972_1986.rds") # read in GOA climate
 # recover the years and names for plots!
 sub_data <- GOA %>%
   select(year, code, value) %>%
-  filter(year <= 1986) 
+  filter(year <= 1986)
 
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
 Y <- dcast(melted, code ~ year)
 names = Y$code
 Y = as.matrix(Y[,-which(names(Y) == "code")])
 
-rotated = rotate_trends(GOA.biol.era1$best_model) 
+rotated.1 = rotate_trends(GOA.biol.era1$best_model)
 
 # set new names
-new.names <- c("Chignik.coho", "Chignik.pink", "Chiniak.eulachon", "Chiniak.jellyfish", 
-               "Chiniak.P.cod", "Chiniak.shrimp", "Cook.Inlet.coho", "Kodiak.coho", "Kodiak.pink", 
-               "Pavlof.capelin", "Pavlof.eulachon", "Pavlof.jellyfish", "Pavlof.P.cod", "Pavlof.shrimp",
-               "Prince.William.coho", "Southeast.coho", "Southeast.herring", "Southeast.pink", "South.Peninsula.coho", "South.Peninsula.pink")
+new.names <- c("Chignik coho", "Chignik pink", "Chiniak eulachon", "Chiniak jellyfish",
+               "Chiniak P cod", "Chiniak shrimp", "Cook Inlet coho", "Kodiak coho", "Kodiak pink",
+               "Pavlof capelin", "Pavlof eulachon", "Pavlof jellyfish", "Pavlof P cod", "Pavlof shrimp",
+               "Prince William coho", "Southeast coho", "Southeast herring", "Southeast pink", "South Peninsula coho",
+               "South Peninsula pink")
 
 check <- cbind(as.character(names), new.names)
 check
@@ -370,33 +371,65 @@ loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
 names(loadings.1)  <- new.names
 
 # now....era2
-GOA.biol.era2 <- readRDS("GOA_biol_1_trend_original_data_2003_2017.rds") # read in GOA climate model
-rotated = rotate_trends(GOA.biol.era2$best_model) 
+GOA.biol.era2 <- readRDS("GOA_biol_1_trend_original_data_2005_2019.rds") # read in GOA climate model
+rotated.2 = rotate_trends(GOA.biol.era2$best_model)
 loadings.2 <- as.data.frame(rotated$Z_rot[,,1])
 names(loadings.2)  <- new.names
 
 loadings.1$era <- "1972-1986"
-loadings.2$era <- "2003-2017"
+loadings.2$era <- "2005-2019"
 
 
 # plot
 plot.load <- rbind(loadings.1, loadings.2) %>%
   gather(key, value, -era)
 
-# rank <- tapply(plot.load$value, plot.load$key, mean)
-# plot.load$rank <- rank[match(plot.load$key, names(rank))]
-# 
-# plot.load$key <- reorder(plot.load$key, plot.load$rank)
+rank <- tapply(plot.load$value, plot.load$key, mean)
+plot.load$rank <- rank[match(plot.load$key, names(rank))]
+plot.load$key <- reorder(plot.load$key, -plot.load$rank)
 
 # set pallette
 cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-ggplot(plot.load, aes(value, fill=era)) + 
-  geom_density(alpha=0.5) +
+plot.a <- ggplot(plot.load, aes(key, value, fill=era)) +
+  geom_violin(color=NA) +
   scale_fill_manual(values=cb[c(2,4)]) +
   theme_bw() +
-  facet_wrap(~key, scales = "free_y") +
-  xlim(-2.5, 2.5) + geom_vline(xintercept = 0, lty=2) + 
-  theme(legend.title = element_blank(), legend.position = 'top')
+  ylim(-1.8, 2) + geom_hline(yintercept = 0, lty=2) +
+  theme(legend.title = element_blank(), axis.title.y = element_blank(), legend.position = 'top',
+        title = element_text(size=9)) +
+  coord_flip() + ylab("Loading") + ggtitle("a) Era-specific loadings")
 
-ggsave("era-dependent biology loadings.png", width=8, height=6, units="in")
+plot.trend <- data.frame(year=1972:1986, trend=as.vector(rotated.1$trends_mean),
+                         lo=as.vector(rotated.1$trends_lower),
+                         hi=as.vector(rotated.1$trends_upper))
+
+plot.b <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[2]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[2], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
+  ggtitle("b) Trend 1972-1986") +
+  theme(title = element_text(size=8))
+
+plot.trend <- data.frame(year=2005:2019, trend=as.vector(rotated.2$trends_mean),
+                         lo=as.vector(rotated.2$trends_lower),
+                         hi=as.vector(rotated.2$trends_upper))
+
+plot.c <- ggplot(plot.trend, aes(year, trend)) +
+  theme_bw() +
+  geom_line(color=cb[4]) +
+  geom_ribbon(aes(ymin=lo, ymax=hi), fill=cb[4], alpha=0.4) +
+  geom_hline(yintercept = 0) + ylab("Trend value") + xlab("Year") +
+  ggtitle("c) Trend 2005-2019") +
+  theme(title = element_text(size=8))
+
+plot.null <- ggplot() + theme_void()
+
+png("era-specific biology dfa.png", 6,6, units="in", res=300)
+
+ggpubr::ggarrange(plot.a,
+                  ggpubr::ggarrange(plot.null, plot.b, plot.c, ncol=1, nrow=3, heights = c(0.2,1,1)),
+                  ncol=2, widths=c(1,0.8))
+
+dev.off()
