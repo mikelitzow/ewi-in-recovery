@@ -699,7 +699,7 @@ rotated.2 = rotate_trends(GOA.clim.era2$best_model)
 loadings.2 <- as.data.frame(rotated.2$Z_rot[,,1])
 names(loadings.2)  <- new.names
 
-loadings.1$era <- "1950-1964"
+loadings.1$era <- "1972-1986"
 loadings.2$era <- "2005-2019"
 
 
