@@ -1772,8 +1772,8 @@ dev.off()
 Or, much better! I ran a single model for the entire plankton TS and this appears to work...
 
 ```{r, echo=F}
-# all <- readRDS("all_plankton_12.11.19.one.trend.rds") 
-all <- readRDS("GOA_plankton_11.18.19.one.trends.rds") 
+all <- readRDS("all_plankton_12.11.19.one.trend.rds")
+# all <- readRDS("GOA_plankton_11.18.19.one.trends.rds") 
 all$summary
 ```
 
@@ -1943,7 +1943,7 @@ print(paste("Proportion > 0: ", sum(x > 0)/length(x)))
 
 plot.c <- ggplot(mod, aes(x=SST)) +
   theme_bw() +
-  geom_density(fill=cb[3]) + 
+  geom_density(fill=cb[3], color=NA) + 
   geom_hline(yintercept=0) + 
   geom_vline(xintercept = 0, lty=2) + 
   xlab("Slope") + 
