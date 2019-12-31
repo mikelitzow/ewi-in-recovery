@@ -367,13 +367,13 @@ check <- cbind(as.character(names), new.names)
 check
 
 # back to the bespoke code!
-loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
+loadings.1 <- as.data.frame(rotated.1$Z_rot[,,1])
 names(loadings.1)  <- new.names
 
 # now....era2
 GOA.biol.era2 <- readRDS("GOA_biol_1_trend_original_data_2005_2019.rds") # read in GOA climate model
 rotated.2 = rotate_trends(GOA.biol.era2$best_model)
-loadings.2 <- as.data.frame(rotated$Z_rot[,,1])
+loadings.2 <- as.data.frame(rotated.2$Z_rot[,,1])
 names(loadings.2)  <- new.names
 
 loadings.1$era <- "1972-1986"
