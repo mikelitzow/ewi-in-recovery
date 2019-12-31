@@ -283,12 +283,12 @@ dev.off()
 # last 15
 sub_data <- GOA %>%
   select(year, code, value) %>%
-  filter(year >= 2003)
+  filter(year >= 2005)
 
 # ONE! trend model
 # with original data
 max_trends = 1
-name <- "GOA_biol_1_trend_original_data_2003_2017"
+name <- "GOA_biol_1_trend_original_data_2005_2019"
 
 # reshape data
 melted = melt(sub_data[, c("code", "year", "value")], id.vars = c("code", "year"))
@@ -384,21 +384,29 @@ loadings.2$era <- "2005-2019"
 plot.load <- rbind(loadings.1, loadings.2) %>%
   gather(key, value, -era)
 
-rank <- tapply(plot.load$value, plot.load$key, mean)
+# check!
+plot(plot.load$value[plot.load$era=="1972-1986"], plot.load$value[plot.load$era=="2005-2019"])
+
+
+rank <- tapply(plot.load$value[plot.load$era=="1972-1986"], plot.load$key[plot.load$era=="1972-1986"], median, na.rm=T)
 plot.load$rank <- rank[match(plot.load$key, names(rank))]
 plot.load$key <- reorder(plot.load$key, -plot.load$rank)
 
-# set pallette
+# and order eras!
+plot.load$era.order <- as.factor(ifelse(plot.load$era=="1972-1986", 2, 1))
+
+# set palette
 cb <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-plot.a <- ggplot(plot.load, aes(key, value, fill=era)) +
+plot.a <- ggplot(plot.load, aes(key, value, fill=era.order)) +
   geom_violin(color=NA) +
-  scale_fill_manual(values=cb[c(2,4)]) +
+  scale_fill_manual(values=cb[c(4,2)], labels=c("2005-2019", "1972-1986")) +
   theme_bw() +
-  ylim(-1.8, 2) + geom_hline(yintercept = 0, lty=2) +
+  ylim(-2, 2) + geom_hline(yintercept = 0, lty=2) +
   theme(legend.title = element_blank(), axis.title.y = element_blank(), legend.position = 'top',
         title = element_text(size=9)) +
-  coord_flip() + ylab("Loading") + ggtitle("a) Era-specific loadings")
+  coord_flip() + ylab("Loading") + ggtitle("a) Era-specific loadings") +
+  guides(fill=guide_legend(reverse=T))
 
 plot.trend <- data.frame(year=1972:1986, trend=as.vector(rotated.1$trends_mean),
                          lo=as.vector(rotated.1$trends_lower),
