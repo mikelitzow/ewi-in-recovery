@@ -687,7 +687,7 @@ rotated.1 = rotate_trends(GOA.clim.era1$best_model)
 
 # set new names
 new.names <- c("East spring SST", "East winter SST", "SLP gradient", "Papa advection",
-               "GAK1 salinity", "West spring SST", "West winter SST", "Downwell 54 134", "Downwell 57 137", "Downwell 60 146", "Downwell 60 149")
+               "GAK1 salinity", "West spring SST", "West winter SST", "Upwell 54 134", "Upwell 57 137", "Upwell 60 146", "Upwell 60 149")
 
 # back to the bespoke code!
 loadings.1 <- as.data.frame(rotated.1$Z_rot[,,1])
