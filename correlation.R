@@ -35,7 +35,7 @@ Y <- as.matrix(Y[, -which(names(Y) == "code")])
 # set new names
 new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient",
                "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST",
-               "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
+               "Upwelling.54.134", "Upwelling.57.137", "Upwelling.60.146", "Upwelling.60.149")
 
 # look at rolling correlations between fitted and observed values, as in Ecology paper
 # using 25-yr rolling windows!
