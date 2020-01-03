@@ -51,7 +51,8 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 rotated = rotate_trends(GOA.clim$best_model) 
 
 # set new names
-new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
+new.names <- c("East spring SST", "East winter SST", "SLP gradient", "Papa advection", "GAK1 salinity", "West spring SST", "West winter SST", " Upwell 54 134", " Upwell 57 137", " Upwell 60 146", " Upwell 60 149")
+
 
 # bespoke plotting code
 loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
@@ -86,9 +87,6 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 
 rotated = rotate_trends(GOA.clim$best_model) 
 
-# set new names
-new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
-
 
 plot.trend <- data.frame(year=1950:2019, trend=as.vector(rotated$trends_mean),
                          lo=as.vector(rotated$trends_lower),
@@ -120,7 +118,7 @@ f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
   
 prop1 <- apply(loadings.1, 2, f)
 prop1
-keep <- prop1 > 0.95
+keep <- prop1 > 0.90
 
 loadings.1 <- loadings.1[,keep]
 
