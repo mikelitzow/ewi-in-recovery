@@ -435,7 +435,7 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 
 rotated = rotate_trends(GOA.biol$best_model) 
 
-new.names <- c("Chignik.coho", "Chignik.pink", "Chiniak.eulachon", "Chiniak.jellyfish", "Chiniak.P.cod", "Chiniak.shrimp", "Cook.Inlet.coho", "Kodiak.coho", "Kodiak.pink", "Pavlof.capelin", "Pavlof.eulachon", "Pavlof.jellyfish", "Pavlof.P.cod", "Pavlof.shrimp", "Prince.William.coho", "Southeast.coho", "Southeast.herring", "Southeast.pink", "South.Peninsula.coho", "South.Peninsula.pink")
+new.names <- c("Chignik coho", "Chignik pink", "Chiniak eulachon", "Chiniak jellyfish", "Chiniak P. cod", "Chiniak shrimp", "Cook Inlet coho", "Kodiak coho", "Kodiak pink", "Pavlof capelin", "Pavlof eulachon", "Pavlof jellyfish", "Pavlof P. cod", "Pavlof shrimp", "Prince William coho", "Southeast coho", "Southeast herring", "Southeast pink", "South Peninsula coho", "South Peninsula pink")
 
  check <- data.frame(names=names, newnames=new.names)
  check
