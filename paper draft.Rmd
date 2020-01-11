@@ -51,7 +51,8 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 rotated = rotate_trends(GOA.clim$best_model) 
 
 # set new names
-new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
+new.names <- c("East spring SST", "East winter SST", "SLP gradient", "Papa advection", "GAK1 salinity", "West spring SST", "West winter SST", " Upwell 54 134", " Upwell 57 137", " Upwell 60 146", " Upwell 60 149")
+
 
 # bespoke plotting code
 loadings.1 <- as.data.frame(rotated$Z_rot[,,1])
@@ -86,9 +87,6 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 
 rotated = rotate_trends(GOA.clim$best_model) 
 
-# set new names
-new.names <- c("East.spring.SST", "East.winter.SST", "SLP.gradient", "Papa.advection", "GAK1.salinity", "West.spring.SST", "West.winter.SST", "Downwell.54.134", "Downwell.57.137", "Downwell.60.146", "Downwell.60.149")
-
 
 plot.trend <- data.frame(year=1950:2019, trend=as.vector(rotated$trends_mean),
                          lo=as.vector(rotated$trends_lower),
@@ -120,7 +118,7 @@ f <- function(x) max(sum(x<0)/length(x), sum(x>0)/length(x))
   
 prop1 <- apply(loadings.1, 2, f)
 prop1
-keep <- prop1 > 0.95
+keep <- prop1 > 0.90
 
 loadings.1 <- loadings.1[,keep]
 
@@ -437,7 +435,7 @@ Y = as.matrix(Y[,-which(names(Y) == "code")])
 
 rotated = rotate_trends(GOA.biol$best_model) 
 
-new.names <- c("Chignik.coho", "Chignik.pink", "Chiniak.eulachon", "Chiniak.jellyfish", "Chiniak.P.cod", "Chiniak.shrimp", "Cook.Inlet.coho", "Kodiak.coho", "Kodiak.pink", "Pavlof.capelin", "Pavlof.eulachon", "Pavlof.jellyfish", "Pavlof.P.cod", "Pavlof.shrimp", "Prince.William.coho", "Southeast.coho", "Southeast.herring", "Southeast.pink", "South.Peninsula.coho", "South.Peninsula.pink")
+new.names <- c("Chignik coho", "Chignik pink", "Chiniak eulachon", "Chiniak jellyfish", "Chiniak P. cod", "Chiniak shrimp", "Cook Inlet coho", "Kodiak coho", "Kodiak pink", "Pavlof capelin", "Pavlof eulachon", "Pavlof jellyfish", "Pavlof P. cod", "Pavlof shrimp", "Prince William coho", "Southeast coho", "Southeast herring", "Southeast pink", "South Peninsula coho", "South Peninsula pink")
 
  check <- data.frame(names=names, newnames=new.names)
  check
@@ -1772,8 +1770,8 @@ dev.off()
 Or, much better! I ran a single model for the entire plankton TS and this appears to work...
 
 ```{r, echo=F}
-# all <- readRDS("all_plankton_12.11.19.one.trend.rds") 
-all <- readRDS("GOA_plankton_11.18.19.one.trends.rds") 
+all <- readRDS("all_plankton_12.11.19.one.trend.rds")
+# all <- readRDS("GOA_plankton_11.18.19.one.trends.rds") 
 all$summary
 ```
 
@@ -1943,7 +1941,7 @@ print(paste("Proportion > 0: ", sum(x > 0)/length(x)))
 
 plot.c <- ggplot(mod, aes(x=SST)) +
   theme_bw() +
-  geom_density(fill=cb[3]) + 
+  geom_density(fill=cb[3], color=NA) + 
   geom_hline(yintercept=0) + 
   geom_vline(xintercept = 0, lty=2) + 
   xlab("Slope") + 
